@@ -1,0 +1,81 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>FridgeShare</Name>
+  <Repository>nacholabs/fridgeshare:latest</Repository>
+  <Registry>https://hub.docker.com/r/nacholabs/fridgeshare</Registry>
+  <Network>bridge</Network>
+  <MyIP/>
+  <Shell>sh</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/nacho-labs-llc/fridgeshare/issues</Support>
+  <Project>https://fridgeshare.com</Project>
+  <Overview>A virtual fridge door for your household. Put sticky notes, letter magnets, photos, emoji, and drawings on a shared board. Give your household the edit link, or share a read-only link for everyone else. No accounts. No tracking. Your data stays on your server.</Overview>
+  <Category>Productivity: Tools:</Category>
+  <WebUI>http://[IP]:[PORT:4173]/</WebUI>
+  <TemplateURL>https://raw.githubusercontent.com/nacho-labs-llc/fridgeshare/main/unraid/fridgeshare.xml</TemplateURL>
+  <ExtraParams/>
+  <PostArgs/>
+  <CPUset/>
+  <DateInstalled/>
+  <DonateText/>
+  <DonateLink/>
+  <Description>
+    FridgeShare is a self-hosted virtual fridge board for households and small groups.[br][br]
+    Put sticky notes, letter magnets, photos, emoji, and drawings on a shared board. Give your household the edit URL (which includes the edit token as a URL fragment), or strip the token for a read-only link.[br][br]
+    [b]Edit access:[/b] The edit token lives in the URL fragment; it is never sent to the server in page loads. Share the full URL to give edit access; share without the fragment for view-only.[br][br]
+    [b]Admin token:[/b] Set SELFHOST_ADMIN_TOKEN before exposing FridgeShare outside your LAN. This restricts board creation and deletion to people who have the token. Regular board editing still uses the per-board edit token.[br][br]
+    [b]Backup:[/b] Everything is in the data directory. Back it up with a simple file copy.
+  </Description>
+  <Networking>
+    <Mode>bridge</Mode>
+    <Publish>
+      <Port>
+        <HostPort>4173</HostPort>
+        <ContainerPort>4173</ContainerPort>
+        <Protocol>tcp</Protocol>
+      </Port>
+    </Publish>
+  </Networking>
+  <Data>
+    <Volume>
+      <HostDir>/mnt/user/appdata/fridgeshare</HostDir>
+      <ContainerDir>/app/server/data</ContainerDir>
+      <Mode>rw</Mode>
+    </Volume>
+  </Data>
+  <Environment>
+    <Variable>
+      <Value>production</Value>
+      <Name>NODE_ENV</Name>
+      <Mode/>
+    </Variable>
+    <Variable>
+      <Value>4173</Value>
+      <Name>PORT</Name>
+      <Mode/>
+    </Variable>
+    <Variable>
+      <Value/>
+      <Name>SELFHOST_ADMIN_TOKEN</Name>
+      <Mode/>
+    </Variable>
+  </Environment>
+  <Labels/>
+
+  <Config Name="WebUI Port" Target="4173" Default="4173" Mode="tcp"
+    Description="Port for the FridgeShare web interface. Open http://[IP]:[PORT]/ after install."
+    Type="Port" Display="always" Required="true" Mask="false">4173</Config>
+
+  <Config Name="Data" Target="/app/server/data" Default="/mnt/user/appdata/fridgeshare" Mode="rw"
+    Description="Where boards, uploads, and directory metadata are stored. Back this directory up before upgrading."
+    Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/fridgeshare</Config>
+
+  <Config Name="Admin Token" Target="SELFHOST_ADMIN_TOKEN" Default="" Mode=""
+    Description="Recommended: set this before making FridgeShare accessible outside your home network. Required to create or delete boards via the directory. Leave blank to allow open board creation on trusted networks."
+    Type="Variable" Display="always" Required="false" Mask="true"></Config>
+
+  <Config Name="Port (env)" Target="PORT" Default="4173" Mode=""
+    Description="Must match the port mapping above."
+    Type="Variable" Display="advanced" Required="false" Mask="false">4173</Config>
+
+</Container>

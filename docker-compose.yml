@@ -1,0 +1,19 @@
+# No git clone needed. Download this file and run:
+#   docker compose up -d
+#
+# FridgeShare will be available at http://localhost:4173
+# Your data lives in ./data/ (boards, uploads, metadata)
+
+services:
+  fridge:
+    image: nacholabs/fridgeshare:latest
+    ports:
+      - "4173:4173"
+    environment:
+      PORT: "4173"
+      NODE_ENV: production
+      # Recommended: set this before exposing outside your LAN.
+      # SELFHOST_ADMIN_TOKEN: "change-me"
+    volumes:
+      - ./data:/app/server/data
+    restart: unless-stopped

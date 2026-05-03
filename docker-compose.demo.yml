@@ -1,0 +1,40 @@
+services:
+  fridge:
+    image: nacholabs/fridgeshare:latest
+    ports:
+      - "4173:4173"
+    environment:
+      PORT: "4173"
+      NODE_ENV: production
+      # No SELFHOST_ADMIN_TOKEN; anyone can create boards on the demo
+    volumes:
+      - demo-data:/app/server/data
+    restart: unless-stopped
+
+  # Clears all boards and uploads at the top of every hour
+  clear:
+    image: nacholabs/fridgeshare:latest
+    entrypoint: >
+      sh -c "
+        echo 'Demo clear service started';
+        while true; do
+          now=$$(date +%s);
+          next=$$(( (now / 3600 + 1) * 3600 ));
+          sleep_for=$$(( next - now ));
+          echo \"Sleeping $${sleep_for}s until next clear...\";
+          sleep $$sleep_for;
+          node scripts/clear-demo.js;
+        done
+      "
+    environment:
+      FRIDGE_DATA_DIR: /app/server/data/fridges
+      FRIDGE_UPLOAD_DIR: /app/server/data/uploads
+      BOARD_DIRECTORY_PATH: /app/server/data/boards.json
+    volumes:
+      - demo-data:/app/server/data
+    depends_on:
+      - fridge
+    restart: unless-stopped
+
+volumes:
+  demo-data:

@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>FridgeShare</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <main class="app-shell" aria-label="FridgeShare">
+      <canvas id="fridge-canvas" aria-label="Digital refrigerator door"></canvas>
+
+      <div id="kit-tray" class="kit-tray" aria-label="Fridge kit tray">
+        <div class="kit-tray__bar">
+          <div class="kit-tray__tabs" role="tablist" aria-label="Item categories">
+            <button class="kit-tray__tab is-active" data-tab="letters" role="tab" aria-selected="true" aria-controls="panel-letters">Letters</button>
+            <button class="kit-tray__tab" data-tab="notes" role="tab" aria-selected="false" aria-controls="panel-notes">Notes</button>
+            <button class="kit-tray__tab" data-tab="photos" role="tab" aria-selected="false" aria-controls="panel-photos">Photos</button>
+            <button class="kit-tray__tab" data-tab="emoji" role="tab" aria-selected="false" aria-controls="panel-emoji">Emoji</button>
+            <button class="kit-tray__tab" data-tab="boards" role="tab" aria-selected="false" aria-controls="panel-boards">Boards</button>
+            <button class="kit-tray__tab" data-tab="surface" role="tab" aria-selected="false" aria-controls="panel-surface">Surface</button>
+          </div>
+          <div class="kit-tray__utils">
+            <span id="mode-pill" class="mode-pill">Local</span>
+            <button id="export-button" type="button">Export</button>
+            <button id="import-button" type="button">Import</button>
+            <button id="reset-button" type="button">Reset</button>
+            <button id="tray-toggle" class="kit-tray__toggle" type="button" aria-expanded="true" title="Collapse tray">^</button>
+          </div>
+        </div>
+        <div class="kit-tray__body">
+          <div id="panel-letters" class="kit-tray__panel" role="tabpanel" data-panel="letters">
+            <div id="magnet-style-selector" class="magnet-style-selector" role="group" aria-label="Magnet style"></div>
+            <div id="magnet-size-selector" class="size-selector" role="group" aria-label="Magnet size"></div>
+            <div id="alphabet-buttons" class="alphabet-buttons"></div>
+          </div>
+          <div id="panel-notes" class="kit-tray__panel is-hidden" role="tabpanel" data-panel="notes">
+            <div id="paper-style-selector" class="paper-style-selector" role="group" aria-label="Sticky note paper style"></div>
+            <div id="note-size-selector" class="size-selector" role="group" aria-label="Note size"></div>
+            <button id="add-note-button" type="button" class="kit-action-btn">Add Sticky Note</button>
+          </div>
+          <div id="panel-photos" class="kit-tray__panel is-hidden" role="tabpanel" data-panel="photos">
+            <div id="photo-style-selector" class="photo-style-selector" role="group" aria-label="Photo frame style"></div>
+            <div id="photo-size-selector" class="size-selector" role="group" aria-label="Photo size"></div>
+            <button id="add-photo-button" type="button" class="kit-action-btn">Add Photo</button>
+            <span class="kit-hint">or drag &amp; drop an image onto the fridge</span>
+            <input id="photo-file" type="file" accept="image/*" hidden>
+          </div>
+          <div id="panel-emoji" class="kit-tray__panel is-hidden" role="tabpanel" data-panel="emoji">
+            <div id="emoji-category-bar" class="emoji-category-bar" role="toolbar" aria-label="Emoji categories"></div>
+            <div id="emoji-grid" class="emoji-grid"></div>
+          </div>
+          <div id="panel-boards" class="kit-tray__panel is-hidden" role="tabpanel" data-panel="boards">
+            <button id="add-board-button" type="button" class="kit-action-btn">Add Whiteboard</button>
+            <span class="kit-hint">Double-click the board to draw on it</span>
+          </div>
+          <div id="panel-surface" class="kit-tray__panel is-hidden" role="tabpanel" data-panel="surface">
+            <div id="surface-theme-selector" class="surface-theme-selector" role="group" aria-label="Fridge surface theme"></div>
+          </div>
+        </div>
+      </div>
+
+      <input id="import-file" type="file" accept=".fridge,application/json" hidden>
+
+      <div id="toast" class="toast" role="status" aria-live="polite"></div>
+      <div id="caption-tooltip" class="caption-tooltip" aria-hidden="true"></div>
+    </main>
+
+    <script src="/src/emoji-data.js"></script>
+    <script src="/src/fridge-items.js"></script>
+    <script src="/src/fridge-themes.js"></script>
+    <script src="/src/fridge-storage.js"></script>
+    <script src="/src/fridge-canvas.js"></script>
+    <script src="/src/app-local.js"></script>
+  </body>
+</html>

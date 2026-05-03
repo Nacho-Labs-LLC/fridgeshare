@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>FridgeShare Self-Host</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body class="directory-page">
+    <main class="directory-shell">
+      <header class="directory-header">
+        <div>
+          <h1>FridgeShare</h1>
+          <p>Self-hosted boards on this server.</p>
+        </div>
+      </header>
+
+      <section class="directory-create" aria-label="Create board">
+        <input id="board-title" type="text" maxlength="80" placeholder="Kitchen board" aria-label="Board title">
+        <input id="board-slug" type="text" maxlength="64" placeholder="kitchen-board" aria-label="Board slug">
+        <input id="admin-token" type="password" placeholder="Admin token" aria-label="Admin token">
+        <button id="create-board" type="button">Create</button>
+      </section>
+
+      <section>
+        <div id="board-list" class="board-list" aria-live="polite"></div>
+      </section>
+
+      <div id="directory-status" class="directory-status" role="status"></div>
+    </main>
+
+    <script src="/src/app-selfhost.js"></script>
+  </body>
+</html>

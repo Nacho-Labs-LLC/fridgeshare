@@ -1,0 +1,7 @@
+{
+  "$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/fallow.schema.json",
+  "dynamicallyLoaded": [
+    "styles.css",
+    "src/emoji-data.js"
+  ]
+}

@@ -1,0 +1,16 @@
+.git
+.agents
+.claude
+.codex
+.copilot
+.gemini
+.mcp.json
+.env
+.env.*
+!.env.example
+node_modules
+server/data
+server-test*.log
+Dockerfile
+docker-compose.yml
+npm-debug.log*

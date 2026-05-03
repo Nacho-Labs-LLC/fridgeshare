@@ -1,0 +1,33 @@
+{
+  "name": "fridgeshare",
+  "version": "0.1.0",
+  "description": "Self-hosted virtual fridge board for sharing notes, photos, and magnets with your household",
+  "private": true,
+  "homepage": "https://github.com/nacho-labs-llc/fridgeshare#readme",
+  "bugs": {
+    "url": "https://github.com/nacho-labs-llc/fridgeshare/issues"
+  },
+  "keywords": [
+    "self-hosted",
+    "fridge",
+    "whiteboard",
+    "household",
+    "docker"
+  ],
+  "author": "Nacho Labs LLC",
+  "packageManager": "npm@11.3.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node server/index.js",
+    "test": "node --test test/*.test.js",
+    "clear-demo": "node scripts/clear-demo.js",
+    "check": "node --check core/board-state.js && node --check apps/selfhost/board-directory-store.js && node --check apps/selfhost/file-board-store.js && node --check apps/selfhost/file-image-store.js && node --check apps/selfhost/server.js && node --check src/app-selfhost.js && node --check src/fridge-items.js && node --check src/fridge-themes.js && node --check src/fridge-storage.js && node --check src/fridge-canvas.js && node --check src/app-local.js && node --check src/app-online.js && node --check server/index.js && node --test test/*.test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nacho-labs-llc/fridgeshare.git"
+  },
+  "license": "MIT"
+}
