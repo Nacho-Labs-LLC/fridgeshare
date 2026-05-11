@@ -27,7 +27,7 @@ class FileBoardStore {
       throw error;
     }
 
-    const boards = [];
+    const readPromises = [];
     for (const entry of entries) {
       if (!entry.isFile() || path.extname(entry.name) !== ".json") {
         continue;
@@ -38,12 +38,11 @@ class FileBoardStore {
         continue;
       }
 
-      const result = await this.read(id);
-      if (result.ok) {
-        boards.push(result.value);
-      }
+      readPromises.push(this.read(id));
     }
-    return boards;
+
+    const results = await Promise.all(readPromises);
+    return results.filter((r) => r.ok).map((r) => r.value);
   }
 
   async read(id) {
