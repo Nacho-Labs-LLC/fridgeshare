@@ -1,4 +1,5 @@
 const http = require("http");
+const crypto = require("crypto");
 const fs = require("fs");
 const fsp = require("fs/promises");
 const path = require("path");
@@ -93,6 +94,15 @@ function isBoardSlug(value) {
   return BOARD_SLUG_PATTERN.test(value);
 }
 
+function safeCompare(a, b) {
+  if (typeof a !== "string" || typeof b !== "string") {
+    return false;
+  }
+  const aHash = crypto.createHash("sha256").update(a).digest();
+  const bHash = crypto.createHash("sha256").update(b).digest();
+  return crypto.timingSafeEqual(aHash, bHash);
+}
+
 function getEditToken(request) {
   const value = request.headers["x-fridge-edit-token"];
   return typeof value === "string" && EDIT_TOKEN_PATTERN.test(value) ? value : null;
@@ -102,11 +112,11 @@ function canAdminister(request) {
   if (!SELFHOST_ADMIN_TOKEN) {
     return true;
   }
-  return request.headers["x-selfhost-admin-token"] === SELFHOST_ADMIN_TOKEN;
+  return safeCompare(request.headers["x-selfhost-admin-token"], SELFHOST_ADMIN_TOKEN);
 }
 
 function hasUploadAdminToken(request) {
-  return Boolean(SELFHOST_ADMIN_TOKEN) && request.headers["x-selfhost-admin-token"] === SELFHOST_ADMIN_TOKEN;
+  return Boolean(SELFHOST_ADMIN_TOKEN) && safeCompare(request.headers["x-selfhost-admin-token"], SELFHOST_ADMIN_TOKEN);
 }
 
 function canWriteBoard(request, saved) {
@@ -114,7 +124,7 @@ function canWriteBoard(request, saved) {
   if (!supplied) {
     return false;
   }
-  return !saved || !saved.editToken || saved.editToken === supplied;
+  return !saved || !saved.editToken || safeCompare(saved.editToken, supplied);
 }
 
 function clientKey(request, boardId) {
@@ -762,6 +772,7 @@ if (require.main === module) {
 module.exports = {
   bootstrapPayload,
   resolveAdminToken,
+  safeCompare,
   server,
   validateBoardState,
 };
