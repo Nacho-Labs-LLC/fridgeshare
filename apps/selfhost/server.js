@@ -9,7 +9,7 @@ const {
   publicBoardState,
   validateBoardState,
 } = require("../../core/board-state");
-const { BoardDirectoryStore, randomToken } = require("./board-directory-store");
+const { BOARD_SLUG_PATTERN, BoardDirectoryStore, randomToken, titleFromSlug } = require("./board-directory-store");
 const { BOARD_ID_PATTERN, FileBoardStore } = require("./file-board-store");
 const { FileImageStore, isValidAssetId } = require("./file-image-store");
 
@@ -18,14 +18,23 @@ const ROOT = path.resolve(__dirname, "../..");
 const DATA_DIR = process.env.FRIDGE_DATA_DIR || path.join(ROOT, "server", "data", "fridges");
 const DIRECTORY_PATH = process.env.BOARD_DIRECTORY_PATH || path.join(ROOT, "server", "data", "boards.json");
 const UPLOAD_DIR = process.env.FRIDGE_UPLOAD_DIR || path.join(ROOT, "server", "data", "uploads");
-const SELFHOST_ADMIN_TOKEN = process.env.SELFHOST_ADMIN_TOKEN || "";
+let SELFHOST_ADMIN_TOKEN = process.env.SELFHOST_ADMIN_TOKEN || "";
+const ADMIN_TOKEN_FILE = path.join(path.dirname(DIRECTORY_PATH), ".admin-token");
+const TRUST_PROXY = process.env.FRIDGE_TRUST_PROXY === "1";
 const MAX_BODY_BYTES = 4 * 1024 * 1024;
 const MAX_UPLOAD_BYTES = Number(process.env.FRIDGE_MAX_UPLOAD_BYTES || MAX_BODY_BYTES);
 const WRITE_RATE_WINDOW_MS = Number(process.env.FRIDGE_WRITE_RATE_WINDOW_MS || 60_000);
 const WRITE_RATE_LIMIT = Number(process.env.FRIDGE_WRITE_RATE_LIMIT || 60);
 const EDIT_TOKEN_PATTERN = /^[a-z0-9_-]{24,96}$/;
-const BOARD_SLUG_PATTERN = /^[a-z0-9][a-z0-9-]{2,62}[a-z0-9]$/;
 const writeRateBuckets = new Map();
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, bucket] of writeRateBuckets) {
+    if (bucket.every((t) => now - t >= WRITE_RATE_WINDOW_MS)) {
+      writeRateBuckets.delete(key);
+    }
+  }
+}, WRITE_RATE_WINDOW_MS).unref();
 const boardStore = new FileBoardStore({ dataDir: DATA_DIR });
 const boardDirectory = new BoardDirectoryStore({ filePath: DIRECTORY_PATH });
 const imageStore = new FileImageStore({ uploadDir: UPLOAD_DIR });
@@ -109,9 +118,14 @@ function canWriteBoard(request, saved) {
 }
 
 function clientKey(request, boardId) {
-  const forwardedFor = request.headers["x-forwarded-for"];
-  const forwardedIp = typeof forwardedFor === "string" ? forwardedFor.split(",")[0].trim() : "";
-  return `${forwardedIp || request.socket.remoteAddress || "unknown"}:${boardId}`;
+  let ip = request.socket.remoteAddress || "unknown";
+  if (TRUST_PROXY) {
+    const forwardedFor = request.headers["x-forwarded-for"];
+    if (typeof forwardedFor === "string") {
+      ip = forwardedFor.split(",")[0].trim() || ip;
+    }
+  }
+  return `${ip}:${boardId}`;
 }
 
 function checkWriteRateLimit(request, boardId) {
@@ -218,10 +232,6 @@ function bootstrapPayload(pathname = "/") {
   };
 }
 
-function boardTitleFromSlug(slug) {
-  return slug.split("-").map((part) => part.slice(0, 1).toUpperCase() + part.slice(1)).join(" ");
-}
-
 async function listSelfhostBoards(request) {
   const directoryBoards = await boardDirectory.list();
   const savedBoards = await boardStore.list();
@@ -242,7 +252,7 @@ async function listSelfhostBoards(request) {
     const existing = bySlug.get(saved.id) || {};
     const board = {
       slug: saved.id,
-      title: existing.title || boardTitleFromSlug(saved.id),
+      title: existing.title || titleFromSlug(saved.id),
       createdAt: existing.createdAt || saved.savedAt || saved.updatedAt || "",
       updatedAt: saved.updatedAt || saved.savedAt || existing.updatedAt || existing.createdAt || "",
       canEdit: canShowEditLinks && Boolean(saved.editToken),
@@ -283,16 +293,12 @@ async function handleBoardDirectory(request, response, pathname) {
       return;
     }
 
-    const raw = await readBody(request);
-    let parsed;
-    try {
-      parsed = JSON.parse(raw);
-    } catch (error) {
-      sendJson(response, 400, { error: "Invalid JSON." });
+    const body = await readJsonBody(request, response);
+    if (!body.ok) {
       return;
     }
 
-    const result = await boardDirectory.create(parsed || {});
+    const result = await boardDirectory.create(body.value || {});
     if (!result.ok) {
       sendJson(response, result.status, { error: result.error });
       return;
@@ -435,10 +441,6 @@ async function handleApi(request, response, pathname) {
   }
 
   const boardId = match[1];
-  if (!BOARD_ID_PATTERN.test(boardId)) {
-    sendJson(response, 400, { error: "Invalid board id." });
-    return;
-  }
 
   if ((request.method === "PUT" || request.method === "PATCH" || request.method === "DELETE") && !checkWriteRateLimit(request, boardId)) {
     sendJson(response, 429, { error: "Too many write requests. Try again shortly." });
@@ -724,14 +726,42 @@ const server = http.createServer(async (request, response) => {
   }
 });
 
+async function resolveAdminToken() {
+  if (SELFHOST_ADMIN_TOKEN) {
+    return;
+  }
+  try {
+    const stored = (await fsp.readFile(ADMIN_TOKEN_FILE, "utf8")).trim();
+    if (stored) {
+      SELFHOST_ADMIN_TOKEN = stored;
+      return;
+    }
+  } catch (error) {
+    if (error.code !== "ENOENT") throw error;
+  }
+  SELFHOST_ADMIN_TOKEN = randomToken();
+  await fsp.mkdir(path.dirname(ADMIN_TOKEN_FILE), { recursive: true });
+  await fsp.writeFile(ADMIN_TOKEN_FILE, SELFHOST_ADMIN_TOKEN + "\n", { mode: 0o600 });
+  console.log(`Admin token generated — retrieve it with: cat ${ADMIN_TOKEN_FILE}`);
+  console.log(`Admin token: ${SELFHOST_ADMIN_TOKEN}`);
+}
+
 if (require.main === module) {
-  server.listen(PORT, () => {
-    console.log(`FridgeShare server is running at http://localhost:${PORT}`);
-  });
+  resolveAdminToken()
+    .then(() => {
+      server.listen(PORT, () => {
+        console.log(`FridgeShare server is running at http://localhost:${PORT}`);
+      });
+    })
+    .catch((error) => {
+      console.error("Failed to resolve admin token:", error);
+      process.exit(1);
+    });
 }
 
 module.exports = {
   bootstrapPayload,
+  resolveAdminToken,
   server,
   validateBoardState,
 };

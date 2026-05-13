@@ -160,7 +160,8 @@ Before a manual restore, verify that the archive expands to the same host data p
 - `FRIDGE_MAX_UPLOAD_BYTES`: maximum upload request size, default `4194304`.
 - `FRIDGE_WRITE_RATE_WINDOW_MS`: write rate limit window per client and board, default `60000`.
 - `FRIDGE_WRITE_RATE_LIMIT`: write requests allowed per window, default `60`.
-- `SELFHOST_ADMIN_TOKEN`: optional admin token for board creation/deletion.
+- `SELFHOST_ADMIN_TOKEN`: admin token for board creation/deletion. If not set, one is generated at startup and written to `.admin-token` in the same directory as `boards.json`. Retrieve it with `cat ./data/.admin-token`.
+- `FRIDGE_TRUST_PROXY`: set to `1` if the server is behind a reverse proxy that sets `X-Forwarded-For`. Leave unset for direct deployments. When unset, the real socket address is always used for rate limiting.
 
 `FRIDGE_WRITE_RATE_WINDOW_MS` and `FRIDGE_WRITE_RATE_LIMIT` together define a write rate limiter applied per client IP per board. The defaults (60 writes per 60 seconds) are generous for normal household use. For a more public server, reduce `FRIDGE_WRITE_RATE_LIMIT`.
 

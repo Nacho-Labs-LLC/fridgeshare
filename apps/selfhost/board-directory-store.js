@@ -119,4 +119,5 @@ module.exports = {
   BoardDirectoryStore,
   normalizeSlug,
   randomToken,
+  titleFromSlug,
 };

@@ -205,7 +205,7 @@ function applyBoardOps(saved, input) {
   }
 
   const revision = getRevision(saved) + 1;
-  const now = typeof input.timestamp === "string" ? input.timestamp : new Date().toISOString();
+  const now = new Date().toISOString();
   const change = {
     revision,
     baseRevision,
