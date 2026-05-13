@@ -45,6 +45,24 @@ Browsers do not send URL fragments to the server when requesting a page. The cli
 
 Treat edit-token URLs like passwords.
 
+### Recovering a Lost Token
+
+If you lose the edit URL but still have server access, recover the token from the board JSON file.
+
+With the downloaded Docker Compose file:
+
+```text
+data/fridges/<slug>.json
+```
+
+If you run from a source checkout with the build override:
+
+```text
+server/data/fridges/<slug>.json
+```
+
+Open the file and look for `"editToken"`. The value is the board edit token.
+
 ## Admin Token
 
 Set `SELFHOST_ADMIN_TOKEN` to require an admin token when creating or deleting boards through the directory API.
@@ -104,6 +122,14 @@ Legacy boards may still contain photo `data:` URLs embedded directly in board JS
 
 Back up the entire host data directory. It contains board metadata, board state, and uploaded images.
 
+| Path | Contents |
+|---|---|
+| `boards.json` | Board directory metadata: slugs, titles, timestamps |
+| `fridges/<slug>.json` | Board canvas state, edit token, items, revision history |
+| `uploads/<asset-id>.*` | Raw uploaded image files referenced by photo items |
+
+`boards.json` and `fridges/` are linked. Restoring one without the other leaves boards either missing from the directory or listed without their content. Photo items in board JSON reference files in `uploads/` by asset ID, so restore all three together.
+
 For the default downloaded Docker Compose file, that host directory is `./data`.
 
 Example backup:
@@ -136,6 +162,8 @@ Before a manual restore, verify that the archive expands to the same host data p
 - `FRIDGE_WRITE_RATE_LIMIT`: write requests allowed per window, default `60`.
 - `SELFHOST_ADMIN_TOKEN`: optional admin token for board creation/deletion.
 
+`FRIDGE_WRITE_RATE_WINDOW_MS` and `FRIDGE_WRITE_RATE_LIMIT` together define a write rate limiter applied per client IP per board. The defaults (60 writes per 60 seconds) are generous for normal household use. For a more public server, reduce `FRIDGE_WRITE_RATE_LIMIT`.
+
 ## Docker Compose
 
 The included `docker-compose.yml` publishes the app on port `4173` and persists data with this host volume:
@@ -162,9 +190,53 @@ environment:
   SELFHOST_ADMIN_TOKEN: "change-me"
 ```
 
+### Changing the Port
+
+To run on a different port, for example `8080`:
+
+```yaml
+environment:
+  PORT: "8080"
+ports:
+  - "8080:8080"
+```
+
+Both the `environment` value and the `ports` mapping must match.
+
+### Moving Data to a Different Host Directory
+
+If you want to store data somewhere other than `./data`, update the volume mapping and the path environment variables together:
+
+```yaml
+environment:
+  FRIDGE_DATA_DIR: /data/fridges
+  FRIDGE_UPLOAD_DIR: /data/uploads
+  BOARD_DIRECTORY_PATH: /data/boards.json
+volumes:
+  - /your/host/path:/data
+```
+
+All three paths must be inside the mounted volume. If any path falls outside the mount, data stored there will be lost when the container is replaced.
+
 ## Upgrades
 
-Before upgrading, stop the server and back up the host data directory.
+Stop the server, back up, then pull the latest image:
+
+```sh
+docker compose down
+tar -czf fridge-backup-pre-upgrade-$(date +%Y%m%d).tgz data
+docker compose pull
+docker compose up -d
+```
+
+Open `http://localhost:4173` and verify your boards are still there.
+
+If you run from a source checkout:
+
+```sh
+git pull
+docker compose -f docker-compose.yml -f docker-compose.build.yml up --build -d
+```
 
 Upgrade cautions:
 
