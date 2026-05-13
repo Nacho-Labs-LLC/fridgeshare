@@ -44,7 +44,7 @@ const staticFiles = new Map([
   ["/src/fridge-storage.js", path.join("src", "fridge-storage.js")],
   ["/src/fridge-canvas.js", path.join("src", "fridge-canvas.js")],
   ["/src/app-local.js", path.join("src", "app-local.js")],
-  ["/src/app-online.js", path.join("src", "app-online.js")],
+  ["/src/app-fridge.js", path.join("src", "app-fridge.js")],
   ["/src/app-selfhost.js", path.join("src", "app-selfhost.js")],
 ]);
 
@@ -624,7 +624,7 @@ function staticPath(pathname) {
     return { filePath: path.join(ROOT, "index.html") };
   }
   if (/^\/b\/[a-z0-9][a-z0-9-]{2,62}[a-z0-9]$/.test(pathname)) {
-    return { filePath: path.join(ROOT, "online.html") };
+    return { filePath: path.join(ROOT, "fridge.html") };
   }
 
   let decoded;
@@ -734,5 +734,4 @@ module.exports = {
   bootstrapPayload,
   server,
   validateBoardState,
-  validateFridgeState: validateBoardState,
 };

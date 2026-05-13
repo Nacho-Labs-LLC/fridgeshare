@@ -27,6 +27,7 @@ class FridgeCanvas {
     this.currentPhotoStyle = "polaroid";
     this.currentPhotoSize = "standard";
     this.currentSurfaceTheme = "classic-white";
+    this.currentTrayStyle = "classic";
     this.hoveredItem = null;
     this.editingNote = null;
     this.editOverlay = null;
@@ -747,6 +748,7 @@ class FridgeCanvas {
       trayToggle.setAttribute("aria-expanded", isCollapsed ? "false" : "true");
     });
 
+    this.initTrayStyle();
     this.setupEmojiPanel();
     this.applyAccessMode();
   }
@@ -1690,6 +1692,32 @@ class FridgeCanvas {
   bringToFront(item) {
     this.items = this.items.filter((candidate) => candidate !== item);
     this.items.push(item);
+  }
+
+  initTrayStyle() {
+    const saved = localStorage.getItem("fridgeshare:tray-style") || "classic";
+    this.applyTrayStyle(saved);
+
+    const btn = document.querySelector("#tray-style-button");
+    if (!btn) return;
+    btn.addEventListener("click", () => {
+      const styles = ["classic", "corner-chip", "paint-shelf", "pill-fan"];
+      const idx = styles.indexOf(this.currentTrayStyle);
+      this.applyTrayStyle(styles[(idx + 1) % styles.length]);
+    });
+  }
+
+  applyTrayStyle(styleId) {
+    const kitTray = document.querySelector("#kit-tray");
+    for (const id of ["corner-chip", "paint-shelf", "pill-fan"]) {
+      kitTray.classList.toggle(`kit-tray--${id}`, id === styleId);
+    }
+    this.currentTrayStyle = styleId;
+    localStorage.setItem("fridgeshare:tray-style", styleId);
+
+    const labels = { classic: "Classic", "corner-chip": "Corner", "paint-shelf": "Shelf", "pill-fan": "Pill" };
+    const btn = document.querySelector("#tray-style-button");
+    if (btn) btn.title = `Tray style: ${labels[styleId] || styleId} — click to cycle`;
   }
 
   setSurfaceTheme(themeId, options = {}) {

@@ -615,6 +615,242 @@ button {
   opacity: 1;
 }
 
+/* === Tray style variants === */
+
+/* -- Corner Chip: compact tab column on the right, panel expands left -- */
+
+.kit-tray--corner-chip {
+  left: auto;
+  right: 0;
+  bottom: 0;
+  width: auto;
+  border-radius: 16px 0 0 0;
+  border-right: none;
+  border-bottom: none;
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: stretch;
+}
+
+.kit-tray--corner-chip .kit-tray__bar {
+  flex-direction: column;
+  width: 48px;
+  flex-shrink: 0;
+  border-bottom: none;
+  border-left: 1px solid rgba(72, 84, 78, 0.12);
+  padding: 8px 6px;
+  gap: 4px;
+  justify-content: flex-start;
+  align-items: center;
+  overflow-y: auto;
+}
+
+.kit-tray--corner-chip .kit-tray__tabs {
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+  gap: 4px;
+}
+
+.kit-tray--corner-chip .kit-tray__tab {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  font-size: 0;
+  position: relative;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.kit-tray--corner-chip .kit-tray__tab::after {
+  content: attr(data-icon);
+  font-size: 17px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  inset: 0;
+}
+
+.kit-tray--corner-chip .kit-tray__utils {
+  flex-direction: column;
+  margin-left: 0;
+  margin-top: auto;
+  gap: 4px;
+  align-items: center;
+  padding-top: 4px;
+}
+
+.kit-tray--corner-chip .kit-tray__utils .mode-pill,
+.kit-tray--corner-chip .kit-tray__utils #export-button,
+.kit-tray--corner-chip .kit-tray__utils #import-button,
+.kit-tray--corner-chip .kit-tray__utils #reset-button {
+  display: none;
+}
+
+.kit-tray--corner-chip .kit-tray__utils #tray-style-button,
+.kit-tray--corner-chip .kit-tray__utils #tray-toggle {
+  width: 36px;
+  height: 28px;
+  padding: 0;
+  font-size: 11px;
+}
+
+.kit-tray--corner-chip .kit-tray__body {
+  width: 280px;
+  flex-shrink: 0;
+  border-right: 1px solid rgba(72, 84, 78, 0.1);
+  overflow-y: auto;
+  max-height: 55vh;
+}
+
+.kit-tray--corner-chip .alphabet-buttons {
+  grid-template-columns: repeat(7, minmax(28px, 1fr));
+}
+
+/* -- Paint Shelf: right-anchored tray, tabbed wells, 3-D edge shadow -- */
+
+.kit-tray--paint-shelf {
+  left: auto;
+  right: 0;
+  width: min(560px, 55vw);
+  border-radius: 14px 0 0 0;
+  border-right: none;
+  border-bottom: none;
+  background: linear-gradient(175deg, rgba(252, 254, 251, 0.96) 0%, rgba(238, 244, 239, 0.96) 100%);
+  box-shadow:
+    0 -8px 28px rgba(31, 37, 34, 0.18),
+    -10px 0 20px rgba(31, 37, 34, 0.06),
+    inset 0 -4px 0 rgba(31, 37, 34, 0.07),
+    inset -4px 0 0 rgba(31, 37, 34, 0.04);
+}
+
+.kit-tray--paint-shelf .kit-tray__bar {
+  border-bottom: 2px solid rgba(72, 84, 78, 0.1);
+  padding: 8px 12px 0;
+  gap: 4px;
+  align-items: flex-end;
+}
+
+.kit-tray--paint-shelf .kit-tray__tab {
+  border-radius: 8px 8px 0 0;
+  border-bottom-color: transparent;
+  padding: 6px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  position: relative;
+  bottom: -1px;
+  background: rgba(255, 255, 255, 0.35);
+  transition: background 120ms, box-shadow 120ms;
+}
+
+.kit-tray--paint-shelf .kit-tray__tab.is-active {
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 -2px 6px rgba(31, 37, 34, 0.08);
+}
+
+.kit-tray--paint-shelf .kit-tray__body {
+  padding: 12px 14px;
+  max-height: 42vh;
+  overflow-y: auto;
+}
+
+/* -- Pill Fan: floating pill bar + card panel, hovering in the corner -- */
+
+.kit-tray--pill-fan {
+  left: auto;
+  right: 16px;
+  bottom: 16px;
+  width: 340px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.kit-tray--pill-fan .kit-tray__bar {
+  background: rgba(250, 252, 249, 0.97);
+  border: 1px solid rgba(72, 84, 78, 0.18);
+  border-radius: 99px;
+  box-shadow: 0 4px 20px rgba(31, 37, 34, 0.16);
+  backdrop-filter: blur(14px);
+  padding: 6px 8px;
+  gap: 4px;
+  border-bottom: 1px solid rgba(72, 84, 78, 0.18);
+}
+
+.kit-tray--pill-fan .kit-tray__tabs {
+  gap: 3px;
+}
+
+.kit-tray--pill-fan .kit-tray__tab {
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  font-size: 0;
+  position: relative;
+  border-radius: 50%;
+  border-color: transparent;
+  transition: background 120ms, transform 120ms;
+}
+
+.kit-tray--pill-fan .kit-tray__tab::after {
+  content: attr(data-icon);
+  font-size: 17px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  inset: 0;
+}
+
+.kit-tray--pill-fan .kit-tray__tab.is-active {
+  background: rgba(31, 37, 34, 0.1);
+  border-color: rgba(31, 37, 34, 0.14);
+}
+
+.kit-tray--pill-fan .kit-tray__utils {
+  margin-left: auto;
+  gap: 4px;
+}
+
+.kit-tray--pill-fan .kit-tray__utils .mode-pill,
+.kit-tray--pill-fan .kit-tray__utils #export-button,
+.kit-tray--pill-fan .kit-tray__utils #import-button,
+.kit-tray--pill-fan .kit-tray__utils #reset-button {
+  display: none;
+}
+
+.kit-tray--pill-fan .kit-tray__utils #tray-style-button,
+.kit-tray--pill-fan .kit-tray__utils #tray-toggle {
+  height: 38px;
+  border-radius: 50%;
+  width: 38px;
+  padding: 0;
+  font-size: 12px;
+}
+
+.kit-tray--pill-fan .kit-tray__body {
+  background: rgba(250, 252, 249, 0.97);
+  border: 1px solid rgba(72, 84, 78, 0.18);
+  border-radius: 18px;
+  box-shadow: 0 4px 20px rgba(31, 37, 34, 0.16);
+  backdrop-filter: blur(14px);
+  padding: 12px;
+  max-height: 38vh;
+  overflow-y: auto;
+  order: -1;
+}
+
+.kit-tray--pill-fan.is-collapsed .kit-tray__body {
+  display: none;
+}
+
 /* Draw toolbar (dry-erase board) */
 
 .draw-toolbar {

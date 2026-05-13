@@ -1,4 +1,4 @@
-const { server, validateBoardState, validateFridgeState } = require("../apps/selfhost/server");
+const { server, validateBoardState } = require("../apps/selfhost/server");
 
 if (require.main === module) {
   const port = Number(process.env.PORT || 4173);
@@ -10,5 +10,4 @@ if (require.main === module) {
 module.exports = {
   server,
   validateBoardState,
-  validateFridgeState,
 };

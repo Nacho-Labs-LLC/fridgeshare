@@ -40,28 +40,19 @@ function plainObject(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
-async function runOnlineBootstrap({
+async function runFridgeBootstrap({
   pathname = "/",
   search = "",
   hash = "",
   bootstrap = { boardId: "", apiBase: "/api/boards" },
   bootstrapOk = true,
-  fillRandomValues = (bytes) => bytes.fill(0),
 } = {}) {
-  const source = await fs.readFile(path.join(__dirname, "..", "src", "app-online.js"), "utf8");
+  const source = await fs.readFile(path.join(__dirname, "..", "src", "app-fridge.js"), "utf8");
   const listeners = {};
   const fetchCalls = [];
-  const historyCalls = [];
   const canvasCalls = [];
   const persistenceCalls = [];
   const context = {
-    Uint8Array,
-    crypto: {
-      getRandomValues: (bytes) => {
-        fillRandomValues(bytes);
-        return bytes;
-      },
-    },
     document: {
       querySelector: (selector) => ({ selector }),
     },
@@ -71,9 +62,6 @@ async function runOnlineBootstrap({
         ok: bootstrapOk,
         json: async () => bootstrap,
       };
-    },
-    history: {
-      replaceState: (...args) => historyCalls.push(args),
     },
     location: { pathname, search, hash },
     window: {
@@ -95,10 +83,10 @@ async function runOnlineBootstrap({
     },
   };
 
-  vm.runInNewContext(source, context, { filename: "src/app-online.js" });
+  vm.runInNewContext(source, context, { filename: "src/app-fridge.js" });
   await listeners.DOMContentLoaded();
 
-  return { canvasCalls, fetchCalls, historyCalls, persistenceCalls };
+  return { canvasCalls, fetchCalls, persistenceCalls };
 }
 
 test.before(async () => {
@@ -146,14 +134,14 @@ test("local page serves the local app shell", async () => {
   assert.deepEqual(scriptSources(text).at(-1), "/src/app-local.js");
 });
 
-test("named self-host board routes serve the online board shell", async () => {
+test("named self-host board routes serve the fridge board shell", async () => {
   const { response, text } = await fetchText(global.baseUrl, "/b/kitchen-board");
 
   assert.equal(response.status, 200);
-  assert.match(text, /<span id="mode-pill" class="mode-pill">Online<\/span>/);
-  assert.match(text, /<button id="share-button" type="button">Share<\/button>/);
-  assert.match(text, /<div id="share-popover" class="share-popover" hidden>/);
-  assert.deepEqual(scriptSources(text).at(-1), "/src/app-online.js");
+  assert.match(text, /<span id="mode-pill" class="mode-pill">Shared<\/span>/);
+  assert.doesNotMatch(text, /share-button/);
+  assert.doesNotMatch(text, /share-popover/);
+  assert.deepEqual(scriptSources(text).at(-1), "/src/app-fridge.js");
 });
 
 test("named board route uses root-relative assets", async () => {
@@ -166,7 +154,7 @@ test("named board route uses root-relative assets", async () => {
     "/src/fridge-themes.js",
     "/src/fridge-storage.js",
     "/src/fridge-canvas.js",
-    "/src/app-online.js",
+    "/src/app-fridge.js",
   ]);
 });
 
@@ -179,7 +167,7 @@ test("named self-host board routes have matching bootstrap metadata", async () =
   assert.equal(bootstrap.apiBase, "/api/boards");
 });
 
-test("all browser scripts referenced by the online page are served as JavaScript", async () => {
+test("all browser scripts referenced by the board page are served as JavaScript", async () => {
   const { text } = await fetchText(global.baseUrl, "/b/kitchen-board");
 
   for (const source of scriptSources(text)) {
@@ -190,18 +178,18 @@ test("all browser scripts referenced by the online page are served as JavaScript
   }
 });
 
-test("online board script preserves case-sensitive edit tokens", async () => {
-  const source = await fs.readFile(path.join(__dirname, "..", "src", "app-online.js"), "utf8");
+test("fridge board script preserves case-sensitive edit tokens", async () => {
+  const source = await fs.readFile(path.join(__dirname, "..", "src", "app-fridge.js"), "utf8");
 
   assert.doesNotMatch(source, /location\.hash[^;]+toLowerCase\(\)/);
   assert.match(source, /\^\[a-z0-9_-\]\{24,96\}\$\/i/);
 });
 
-test("online board bootstrap uses named board hash tokens without changing case", async () => {
+test("fridge board bootstrap uses named board hash tokens without changing case", async () => {
   const editToken = "AbCdEfGhIjKlMnOpQrStUvWx";
-  const result = await runOnlineBootstrap({
+  const result = await runFridgeBootstrap({
     pathname: "/b/Kitchen-Board",
-    hash: `# ${editToken} `,
+    hash: `#${editToken}`,
     bootstrap: { boardId: "kitchen-board", apiBase: "/custom/boards" },
   });
 
@@ -212,49 +200,5 @@ test("online board bootstrap uses named board hash tokens without changing case"
     boardId: "kitchen-board",
     editToken,
     endpoint: "/custom/boards",
-  });
-});
-
-test("online board bootstrap resolves legacy hash board locators", async () => {
-  const editToken = "Token_With-MixedCase_123456";
-  const result = await runOnlineBootstrap({
-    pathname: "/",
-    hash: `#Legacy-Board.${editToken}`,
-  });
-
-  assert.equal(result.canvasCalls[0].options.fridgeId, "legacy-board");
-  assert.equal(result.canvasCalls[0].options.editToken, editToken);
-  assert.deepEqual(plainObject(result.persistenceCalls[0]), {
-    boardId: "legacy-board",
-    editToken,
-    endpoint: "/api/boards",
-  });
-  assert.equal(result.historyCalls.length, 0);
-});
-
-test("online board bootstrap generates and stores a hash locator when none exists", async () => {
-  let randomCall = 0;
-  const result = await runOnlineBootstrap({
-    pathname: "/",
-    search: "?view=all",
-    hash: "#not valid",
-    bootstrapOk: false,
-    fillRandomValues: (bytes) => {
-      bytes.fill(randomCall === 0 ? 1 : 2);
-      randomCall += 1;
-    },
-  });
-
-  assert.equal(result.canvasCalls[0].options.fridgeId, "111111111111");
-  assert.equal(result.canvasCalls[0].options.editToken, "2222222222222222222222222222222222222222");
-  assert.deepEqual(result.historyCalls[0], [
-    null,
-    "",
-    "/?view=all#111111111111.2222222222222222222222222222222222222222",
-  ]);
-  assert.deepEqual(plainObject(result.persistenceCalls[0]), {
-    boardId: "111111111111",
-    editToken: "2222222222222222222222222222222222222222",
-    endpoint: "/api/boards",
   });
 });

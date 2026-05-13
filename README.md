@@ -50,7 +50,7 @@ The fragment (`#abc...`) is the edit token. It never leaves the browser; the ser
 
 ## Self-Hosting
 
-See [docs.fridgeshare.com/self-hosting](https://docs.fridgeshare.com/self-hosting) for the full guide.
+See [docs/SELF_HOSTING.md](docs/SELF_HOSTING.md) for the full guide.
 
 **Docker quick reference:**
 
@@ -115,20 +115,6 @@ docker compose -f docker-compose.yml -f docker-compose.build.yml up --build
 - `src/` - vanilla JS browser client
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full guide.
-
-## Running a Public Demo
-
-`docker-compose.demo.yml` runs a demo instance that clears all boards and uploads at the top of every hour. Boards are open to anyone (no admin token), so treat the data as public.
-
-```sh
-docker compose -f docker-compose.demo.yml up -d
-```
-
-The clear script can also be run standalone:
-
-```sh
-npm run clear-demo
-```
 
 ## Contributing
 

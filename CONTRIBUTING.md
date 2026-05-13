@@ -25,4 +25,4 @@ npm start     # start the server at http://localhost:4173
 
 ## Pull requests
 
-Open a PR against `main`. Include a clear description of what changed and why. For significant changes, open an issue first to discuss the approach.
+Open a PR against `master`. Include a clear description of what changed and why. For significant changes, open an issue first to discuss the approach.
