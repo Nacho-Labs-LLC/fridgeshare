@@ -12,7 +12,7 @@
   <Overview>A virtual fridge door for your household. Put sticky notes, letter magnets, photos, emoji, and drawings on a shared board. Give your household the edit link, or share a read-only link for everyone else. No accounts. No tracking. Your data stays on your server.</Overview>
   <Category>Productivity: Tools:</Category>
   <WebUI>http://[IP]:[PORT:4173]/</WebUI>
-  <TemplateURL>https://raw.githubusercontent.com/nacho-labs-llc/fridgeshare/main/unraid/fridgeshare.xml</TemplateURL>
+  <TemplateURL>https://raw.githubusercontent.com/nacho-labs-llc/fridgeshare/master/unraid/fridgeshare.xml</TemplateURL>
   <ExtraParams/>
   <PostArgs/>
   <CPUset/>
@@ -71,11 +71,15 @@
     Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/fridgeshare</Config>
 
   <Config Name="Admin Token" Target="SELFHOST_ADMIN_TOKEN" Default="" Mode=""
-    Description="Recommended: set this before making FridgeShare accessible outside your home network. Required to create or delete boards via the directory. Leave blank to allow open board creation on trusted networks."
+    Description="Recommended before exposing outside your LAN. Required to create or delete boards. If left blank, a token is auto-generated on first start and saved to appdata/fridgeshare/.admin-token."
     Type="Variable" Display="always" Required="false" Mask="true"></Config>
 
   <Config Name="Port (env)" Target="PORT" Default="4173" Mode=""
     Description="Must match the port mapping above."
     Type="Variable" Display="advanced" Required="false" Mask="false">4173</Config>
+
+  <Config Name="Trust Proxy" Target="FRIDGE_TRUST_PROXY" Default="" Mode=""
+    Description="Set to 1 if FridgeShare is behind a reverse proxy (e.g. Nginx Proxy Manager) that sets X-Forwarded-For. Leave blank for direct access."
+    Type="Variable" Display="advanced" Required="false" Mask="false"></Config>
 
 </Container>

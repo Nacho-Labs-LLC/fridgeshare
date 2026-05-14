@@ -6,10 +6,9 @@ ENV NODE_ENV=production
 ENV PORT=4173
 
 COPY package.json ./
-COPY index.html online.html selfhost.html styles.css ./
+COPY index.html fridge.html selfhost.html styles.css ./
 COPY apps ./apps
 COPY core ./core
-COPY scripts ./scripts
 COPY src ./src
 COPY server ./server
 

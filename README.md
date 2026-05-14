@@ -82,7 +82,7 @@ Set `SELFHOST_ADMIN_TOKEN` before exposing the server to the internet.
 
 ## Unraid
 
-FridgeShare is available in the Unraid Community Applications store. Search for **FridgeShare** or add the template repository manually:
+Install via Community Applications or add the template repository manually in the CA settings:
 
 ```
 https://github.com/nacho-labs-llc/fridgeshare
