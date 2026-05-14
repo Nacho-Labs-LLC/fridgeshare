@@ -1113,3 +1113,9 @@ button {
     flex: 1 1 128px;
   }
 }
+
+/* === Accessibility === */
+*:focus-visible {
+  outline: 2px solid rgba(31, 37, 34, 0.65);
+  outline-offset: 2px;
+}
