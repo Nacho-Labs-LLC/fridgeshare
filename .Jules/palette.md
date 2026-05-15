@@ -1,0 +1,3 @@
+## 2024-05-18 - Missing Global Focus Indicators
+**Learning:** The application completely lacked visible focus indicators for interactive elements (buttons, inputs, tabs), making it impossible to navigate via keyboard for accessibility users. While hover states and active states existed, the lack of `focus-visible` or explicit `outline` styles is a critical accessibility failure.
+**Action:** Added a global `:focus-visible` rule in the base styles to ensure all interactive elements receive a high-contrast focus ring (`outline: 2px solid var(--ink)`). In future projects, ensure a base reset or normalize includes robust default focus states, or explicitly define them early in the design system implementation.
