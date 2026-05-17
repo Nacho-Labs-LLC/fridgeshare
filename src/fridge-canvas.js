@@ -746,6 +746,9 @@ class FridgeCanvas {
       const isCollapsed = kitTray.classList.toggle("is-collapsed");
       trayToggle.textContent = isCollapsed ? "v" : "^";
       trayToggle.setAttribute("aria-expanded", isCollapsed ? "false" : "true");
+      const titleText = isCollapsed ? "Expand tray" : "Collapse tray";
+      trayToggle.title = titleText;
+      trayToggle.setAttribute("aria-label", titleText);
     });
 
     this.initTrayStyle();
@@ -891,6 +894,7 @@ class FridgeCanvas {
           btn.type = "button";
           btn.textContent = group.icon;
           btn.title = group.name;
+          btn.setAttribute("aria-label", group.name);
           btn.addEventListener("click", () => showGroup(group, btn));
           categoryBar.appendChild(btn);
         }
