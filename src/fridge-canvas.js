@@ -575,6 +575,7 @@ class FridgeCanvas {
       button.type = "button";
       button.textContent = letter;
       button.title = `Add ${letter} magnet`;
+      button.setAttribute("aria-label", `Add ${letter} magnet`);
       button.style.setProperty("--magnet-color", magnetPalettes[index % magnetPalettes.length].base);
       button.addEventListener("click", () => this.addAlphabetMagnet(letter));
       tray.appendChild(button);
@@ -737,6 +738,8 @@ class FridgeCanvas {
           const toggle = document.querySelector("#tray-toggle");
           toggle.textContent = "^";
           toggle.setAttribute("aria-expanded", "true");
+          toggle.title = "Collapse tray";
+          toggle.setAttribute("aria-label", "Collapse tray");
         }
       });
     }
@@ -746,6 +749,8 @@ class FridgeCanvas {
       const isCollapsed = kitTray.classList.toggle("is-collapsed");
       trayToggle.textContent = isCollapsed ? "v" : "^";
       trayToggle.setAttribute("aria-expanded", isCollapsed ? "false" : "true");
+      trayToggle.title = isCollapsed ? "Expand tray" : "Collapse tray";
+      trayToggle.setAttribute("aria-label", isCollapsed ? "Expand tray" : "Collapse tray");
     });
 
     this.initTrayStyle();
@@ -871,6 +876,7 @@ class FridgeCanvas {
         btn.type = "button";
         btn.textContent = emoji;
         btn.title = emoji;
+        btn.setAttribute("aria-label", emoji);
         btn.addEventListener("click", () => this.addEmojiSticker(emoji));
         emojiGrid.appendChild(btn);
       }
@@ -891,6 +897,7 @@ class FridgeCanvas {
           btn.type = "button";
           btn.textContent = group.icon;
           btn.title = group.name;
+          btn.setAttribute("aria-label", group.name);
           btn.addEventListener("click", () => showGroup(group, btn));
           categoryBar.appendChild(btn);
         }
@@ -1377,6 +1384,7 @@ class FridgeCanvas {
       btn.className = "draw-toolbar__color";
       btn.style.setProperty("--marker-color", marker.color);
       btn.title = `${marker.label} marker`;
+      btn.setAttribute("aria-label", `${marker.label} marker`);
       btn.setAttribute("aria-pressed", marker.color === this.currentMarkerColor ? "true" : "false");
       if (marker.color === this.currentMarkerColor) btn.classList.add("is-active");
       btn.addEventListener("click", () => {
