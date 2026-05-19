@@ -131,11 +131,11 @@ class FridgeCanvas {
       if (existing) {
         return existing;
       }
-      const next = `client-${Math.random().toString(36).slice(2)}-${Date.now().toString(36)}`;
+      const next = `client-${crypto.randomUUID()}`;
       sessionStorage.setItem(key, next);
       return next;
     } catch (error) {
-      return `client-${Math.random().toString(36).slice(2)}-${Date.now().toString(36)}`;
+      return `client-${crypto.randomUUID()}`;
     }
   }
 
