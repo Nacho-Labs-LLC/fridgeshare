@@ -134,7 +134,7 @@ class FridgeCanvas {
       const next = `client-${crypto.randomUUID()}`;
       sessionStorage.setItem(key, next);
       return next;
-    } catch (error) {
+    } catch {
       return `client-${crypto.randomUUID()}`;
     }
   }
@@ -346,7 +346,7 @@ class FridgeCanvas {
       } else if (!this.hasPendingLocalSave && !this.hasUnsavedLocalChanges && !this.deferredRemoteState) {
         this.updateModePill(this.canEdit ? "Saved" : "View only");
       }
-    } catch (error) {
+    } catch {
       this.updateModePill("Offline");
     } finally {
       this.isPollingRemote = false;
