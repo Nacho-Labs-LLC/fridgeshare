@@ -104,7 +104,7 @@ class FridgeCanvas {
         this.startRemoteSync();
         return;
       }
-    } catch (error) {
+    } catch {
       this.showToast("Saved fridge could not be loaded.");
     }
 
@@ -133,7 +133,7 @@ class FridgeCanvas {
       const next = `client-${Math.random().toString(36).slice(2)}-${Date.now().toString(36)}`;
       sessionStorage.setItem(key, next);
       return next;
-    } catch (error) {
+    } catch {
       return `client-${Math.random().toString(36).slice(2)}-${Date.now().toString(36)}`;
     }
   }
@@ -345,7 +345,7 @@ class FridgeCanvas {
       } else if (!this.hasPendingLocalSave && !this.hasUnsavedLocalChanges && !this.deferredRemoteState) {
         this.updateModePill(this.canEdit ? "Saved" : "View only");
       }
-    } catch (error) {
+    } catch {
       this.updateModePill("Offline");
     } finally {
       this.isPollingRemote = false;
@@ -808,7 +808,7 @@ class FridgeCanvas {
         updateLink();
         await this.copyText(shareLink.value);
         this.showToast("Copied share link.");
-      } catch (error) {
+      } catch {
         this.showToast("Could not copy share link.");
       }
     });
@@ -1779,7 +1779,7 @@ class FridgeCanvas {
 
     try {
       await this.persistence.clear();
-    } catch (error) {
+    } catch {
       this.showToast("Could not clear the saved fridge.");
     }
     this.setSurfaceTheme("classic-white", { skipSave: true });
