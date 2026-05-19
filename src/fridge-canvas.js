@@ -1779,7 +1779,7 @@ class FridgeCanvas {
 
     try {
       await this.persistence.clear();
-    } catch (error) {
+    } catch {
       this.showToast("Could not clear the saved fridge.");
     }
     this.setSurfaceTheme("classic-white", { skipSave: true });
