@@ -104,7 +104,8 @@ class FridgeCanvas {
         this.startRemoteSync();
         return;
       }
-    } catch {
+    } catch (error) {
+      console.error("Failed to load saved fridge:", error);
       this.showToast("Saved fridge could not be loaded.");
     }
 
@@ -130,11 +131,11 @@ class FridgeCanvas {
       if (existing) {
         return existing;
       }
-      const next = `client-${Math.random().toString(36).slice(2)}-${Date.now().toString(36)}`;
+      const next = `client-${crypto.randomUUID()}`;
       sessionStorage.setItem(key, next);
       return next;
     } catch {
-      return `client-${Math.random().toString(36).slice(2)}-${Date.now().toString(36)}`;
+      return `client-${crypto.randomUUID()}`;
     }
   }
 
