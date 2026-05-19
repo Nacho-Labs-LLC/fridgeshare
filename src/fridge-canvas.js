@@ -808,7 +808,7 @@ class FridgeCanvas {
         updateLink();
         await this.copyText(shareLink.value);
         this.showToast("Copied share link.");
-      } catch (error) {
+      } catch {
         this.showToast("Could not copy share link.");
       }
     });
