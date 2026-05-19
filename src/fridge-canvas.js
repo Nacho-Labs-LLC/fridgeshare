@@ -105,6 +105,7 @@ class FridgeCanvas {
         return;
       }
     } catch (error) {
+      console.error("Failed to load saved fridge:", error);
       this.showToast("Saved fridge could not be loaded.");
     }
 
