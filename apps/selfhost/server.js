@@ -98,8 +98,9 @@ function safeCompare(a, b) {
   if (typeof a !== "string" || typeof b !== "string") {
     return false;
   }
-  const aHash = crypto.createHash("sha256").update(a).digest();
-  const bHash = crypto.createHash("sha256").update(b).digest();
+  const key = crypto.randomBytes(32);
+  const aHash = crypto.createHmac("sha256", key).update(a).digest();
+  const bHash = crypto.createHmac("sha256", key).update(b).digest();
   return crypto.timingSafeEqual(aHash, bHash);
 }
 
