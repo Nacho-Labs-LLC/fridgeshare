@@ -7,3 +7,6 @@
 ## 2024-05-18 - Tooltips and ARIA labels for dynamic icon-only tabs
 **Learning:** Tabs in the kit tray become visually icon-only buttons via CSS `font-size: 0` depending on the selected tray style (e.g. corner-chip). Without explicit `aria-label` and `title` attributes, their meaning is lost to both screen readers and sighted users who rely on tooltips.
 **Action:** Always ensure that any text elements that can become visually hidden dynamically via CSS have an explicit `aria-label` and `title` attribute so they remain accessible and understandable in all visual styles.
+## 2026-05-21 - Async loading states
+**Learning:** The self-host application had async submit buttons (like the Create board button) that did not provide a loading state or become disabled during processing. This allows duplicate submissions and provides no user feedback.
+**Action:** Add a loading state (e.g., text 'Creating...' and disabled=true) immediately before fetching, and restore the original state if the fetch fails.

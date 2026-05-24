@@ -190,18 +190,30 @@
     }
 
     setStatus("Creating board...");
-    const response = await fetch("/api/selfhost/boards", {
-      method: "POST",
-      headers: headers(),
-      body: JSON.stringify({ title, slug }),
-    });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      setStatus(data.error || "Could not create board.");
-      return;
-    }
+    const originalText = createButton.textContent;
+    createButton.disabled = true;
+    createButton.textContent = "Creating...";
 
-    location.href = data.url;
+    try {
+      const response = await fetch("/api/selfhost/boards", {
+        method: "POST",
+        headers: headers(),
+        body: JSON.stringify({ title, slug }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        setStatus(data.error || "Could not create board.");
+        createButton.disabled = false;
+        createButton.textContent = originalText;
+        return;
+      }
+
+      location.href = data.url;
+    } catch (error) {
+      setStatus("Could not create board.");
+      createButton.disabled = false;
+      createButton.textContent = originalText;
+    }
   }
 
   async function deleteBoard(board) {
