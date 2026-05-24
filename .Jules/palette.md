@@ -4,7 +4,10 @@
 ## 2024-05-17 - Icon-only buttons accessibility
 **Learning:** Icon-only buttons (like alphabet magnets, emojis, tray toggles, and drawing tools) often use titles or textContent with emojis but lack explicit `aria-label` attributes, leading to poor screen reader experiences.
 **Action:** Always ensure that icon-only buttons have an `aria-label` attribute that matches their visual `title` or intent so that their function is correctly announced by screen readers.
-## 2024-05-18 - Tooltips and ARIA labels for dynamic icon-only tabs
+## 2024-05-18 - Dynamically Generated UI Swatches Accessibility
+**Learning:** Dynamically generated UI swatches (like color pickers, theme selectors, or size presets) that lack explicit text labels are inaccessible to screen readers and miss hover tooltips for sighted users.
+**Action:** Always add descriptive `aria-label` and `title` attributes to dynamically generated swatch buttons, especially when their visual meaning is conveyed entirely through CSS properties or when they visually collapse to icon-only sizes.
+## 2024-05-19 - Tooltips and ARIA labels for dynamic icon-only tabs
 **Learning:** Tabs in the kit tray become visually icon-only buttons via CSS `font-size: 0` depending on the selected tray style (e.g. corner-chip). Without explicit `aria-label` and `title` attributes, their meaning is lost to both screen readers and sighted users who rely on tooltips.
 **Action:** Always ensure that any text elements that can become visually hidden dynamically via CSS have an explicit `aria-label` and `title` attribute so they remain accessible and understandable in all visual styles.
 ## 2026-05-21 - Async loading states

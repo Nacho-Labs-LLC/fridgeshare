@@ -521,6 +521,8 @@ class FridgeCanvas {
         const btn = document.createElement("button");
         btn.type = "button";
         btn.textContent = theme.label;
+        btn.title = theme.label;
+        btn.setAttribute("aria-label", theme.label);
         btn.dataset.theme = theme.id;
         btn.style.setProperty("--surface-color", theme.swatch);
         btn.setAttribute("aria-pressed", theme.id === this.currentSurfaceTheme ? "true" : "false");
@@ -536,6 +538,8 @@ class FridgeCanvas {
       const btn = document.createElement("button");
       btn.type = "button";
       btn.textContent = style.label;
+      btn.title = `Style: ${style.label}`;
+      btn.setAttribute("aria-label", `Style: ${style.label}`);
       btn.dataset.style = style.id;
       btn.setAttribute("aria-pressed", style.id === "classic" ? "true" : "false");
       btn.classList.toggle("is-active", style.id === "classic");
@@ -556,6 +560,8 @@ class FridgeCanvas {
         const btn = document.createElement("button");
         btn.type = "button";
         btn.textContent = preset.label;
+        btn.title = `Size: ${preset.label}`;
+        btn.setAttribute("aria-label", `Size: ${preset.label}`);
         btn.dataset.size = preset.id;
         btn.setAttribute("aria-pressed", preset.id === this.currentMagnetSize ? "true" : "false");
         btn.classList.toggle("is-active", preset.id === this.currentMagnetSize);
@@ -588,6 +594,8 @@ class FridgeCanvas {
         const btn = document.createElement("button");
         btn.type = "button";
         btn.textContent = style.label;
+        btn.title = style.label;
+        btn.setAttribute("aria-label", style.label);
         btn.dataset.style = style.id;
         btn.style.setProperty("--paper-color", style.swatch);
         btn.setAttribute("aria-pressed", style.id === this.currentPaperStyle ? "true" : "false");
@@ -611,6 +619,8 @@ class FridgeCanvas {
         const btn = document.createElement("button");
         btn.type = "button";
         btn.textContent = style.label;
+        btn.title = style.label;
+        btn.setAttribute("aria-label", style.label);
         btn.dataset.style = style.id;
         btn.style.setProperty("--photo-color", style.swatch);
         btn.setAttribute("aria-pressed", style.id === this.currentPhotoStyle ? "true" : "false");
@@ -633,6 +643,8 @@ class FridgeCanvas {
         const btn = document.createElement("button");
         btn.type = "button";
         btn.textContent = preset.label;
+        btn.title = `Size: ${preset.label}`;
+        btn.setAttribute("aria-label", `Size: ${preset.label}`);
         btn.dataset.size = preset.id;
         btn.setAttribute("aria-pressed", preset.id === this.currentNoteSize ? "true" : "false");
         btn.classList.toggle("is-active", preset.id === this.currentNoteSize);
@@ -661,6 +673,8 @@ class FridgeCanvas {
         const btn = document.createElement("button");
         btn.type = "button";
         btn.textContent = preset.label;
+        btn.title = `Size: ${preset.label}`;
+        btn.setAttribute("aria-label", `Size: ${preset.label}`);
         btn.dataset.size = preset.id;
         btn.setAttribute("aria-pressed", preset.id === this.currentPhotoSize ? "true" : "false");
         btn.classList.toggle("is-active", preset.id === this.currentPhotoSize);
@@ -1726,7 +1740,11 @@ class FridgeCanvas {
 
     const labels = { classic: "Classic", "corner-chip": "Corner", "paint-shelf": "Shelf", "pill-fan": "Pill" };
     const btn = document.querySelector("#tray-style-button");
-    if (btn) btn.title = `Tray style: ${labels[styleId] || styleId} — click to cycle`;
+    if (btn) {
+      const newTitle = `Tray style: ${labels[styleId] || styleId} — click to cycle`;
+      btn.title = newTitle;
+      btn.setAttribute("aria-label", newTitle);
+    }
   }
 
   setSurfaceTheme(themeId, options = {}) {
