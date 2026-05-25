@@ -134,6 +134,7 @@
       if (!board.editUrl) {
         edit.setAttribute("aria-disabled", "true");
         edit.className = "is-disabled";
+        edit.title = "Edit link is unavailable without admin token";
         edit.addEventListener("click", (event) => {
           event.preventDefault();
           setStatus("Edit link is unavailable. Enter the admin token if this server requires one.");
@@ -156,6 +157,9 @@
       copyEdit.type = "button";
       copyEdit.textContent = "Copy Edit";
       copyEdit.disabled = !board.editUrl;
+      if (!board.editUrl) {
+        copyEdit.title = "Edit link is unavailable without admin token";
+      }
       copyEdit.addEventListener("click", async () => {
         if (!board.editUrl) {
           setStatus("Edit link is unavailable. Enter the admin token if this server requires one.");
@@ -173,7 +177,7 @@
       del.type = "button";
       del.className = "board-row__delete";
       del.textContent = "Delete";
-      del.addEventListener("click", () => deleteBoard(board));
+      del.addEventListener("click", () => deleteBoard(board, del));
 
       actions.append(view, edit, copy, copyEdit, del);
       item.append(text, actions);
@@ -216,11 +220,15 @@
     }
   }
 
-  async function deleteBoard(board) {
+  async function deleteBoard(board, deleteBtn) {
     const confirmed = window.confirm(`Delete "${board.title}"? This cannot be undone.`);
     if (!confirmed) {
       return;
     }
+
+    const originalText = deleteBtn.textContent;
+    deleteBtn.disabled = true;
+    deleteBtn.textContent = "Deleting...";
 
     setStatus(`Deleting ${boardPath(board.slug)}...`);
     const response = await fetch(`/api/selfhost/boards/${board.slug}`, {
@@ -230,6 +238,8 @@
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
       setStatus(data.error || "Could not delete board.");
+      deleteBtn.disabled = false;
+      deleteBtn.textContent = originalText;
       return;
     }
 
