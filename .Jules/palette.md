@@ -13,3 +13,6 @@
 ## 2026-05-21 - Async loading states
 **Learning:** The self-host application had async submit buttons (like the Create board button) that did not provide a loading state or become disabled during processing. This allows duplicate submissions and provides no user feedback.
 **Action:** Add a loading state (e.g., text 'Creating...' and disabled=true) immediately before fetching, and restore the original state if the fetch fails.
+## 2024-05-22 - Delete board button async state
+**Learning:** Destructive actions like deleting a board lacked asynchronous feedback, allowing users to potentially click multiple times without knowing if the action was processing.
+**Action:** Add a loading state (`disabled=true`, text "Deleting...") to the delete button during the API call, and restore it on failure, providing immediate visual feedback and preventing duplicate requests.

@@ -173,7 +173,7 @@
       del.type = "button";
       del.className = "board-row__delete";
       del.textContent = "Delete";
-      del.addEventListener("click", () => deleteBoard(board));
+      del.addEventListener("click", () => deleteBoard(board, del));
 
       actions.append(view, edit, copy, copyEdit, del);
       item.append(text, actions);
@@ -216,25 +216,38 @@
     }
   }
 
-  async function deleteBoard(board) {
+  async function deleteBoard(board, button) {
     const confirmed = window.confirm(`Delete "${board.title}"? This cannot be undone.`);
     if (!confirmed) {
       return;
     }
 
     setStatus(`Deleting ${boardPath(board.slug)}...`);
-    const response = await fetch(`/api/selfhost/boards/${board.slug}`, {
-      method: "DELETE",
-      headers: headers(),
-    });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      setStatus(data.error || "Could not delete board.");
-      return;
-    }
 
-    setStatus(`Deleted ${boardPath(board.slug)}.`);
-    await loadBoards();
+    const originalText = button.textContent;
+    button.disabled = true;
+    button.textContent = "Deleting...";
+
+    try {
+      const response = await fetch(`/api/selfhost/boards/${board.slug}`, {
+        method: "DELETE",
+        headers: headers(),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        setStatus(data.error || "Could not delete board.");
+        button.disabled = false;
+        button.textContent = originalText;
+        return;
+      }
+
+      setStatus(`Deleted ${boardPath(board.slug)}.`);
+      await loadBoards();
+    } catch (error) {
+      setStatus("Could not delete board.");
+      button.disabled = false;
+      button.textContent = originalText;
+    }
   }
 
   titleInput.addEventListener("input", () => {
