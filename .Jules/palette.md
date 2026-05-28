@@ -13,3 +13,6 @@
 ## 2026-05-21 - Async loading states
 **Learning:** The self-host application had async submit buttons (like the Create board button) that did not provide a loading state or become disabled during processing. This allows duplicate submissions and provides no user feedback.
 **Action:** Add a loading state (e.g., text 'Creating...' and disabled=true) immediately before fetching, and restore the original state if the fetch fails.
+## 2026-05-25 - Permission-gated controls missing context
+**Learning:** Permission-gated controls that are disabled (like Edit and Copy Edit links without an admin token) can cause confusion if they lack context explaining why they are disabled.
+**Action:** Always add tooltips (`title`) to disabled controls that rely on permissions, clearly explaining the requirement to the user.
