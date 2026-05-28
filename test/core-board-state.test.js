@@ -3,6 +3,7 @@ const test = require("node:test");
 
 const {
   applyBoardOps,
+  getRevision,
   normalizeSavedBoard,
   publicBoardState,
   publicBoardChanges,
@@ -253,4 +254,23 @@ test("core patch operations are idempotent by op id", () => {
   assert.equal(result.duplicate, true);
   assert.equal(result.value.revision, 3);
   assert.equal(result.value.items[0].text, "two");
+});
+
+test("getRevision extracts valid positive integers and defaults to 0", () => {
+  assert.equal(getRevision(undefined), 0);
+  assert.equal(getRevision(null), 0);
+  assert.equal(getRevision({}), 0);
+
+  assert.equal(getRevision({ revision: 0 }), 0);
+  assert.equal(getRevision({ revision: 42 }), 42);
+
+  assert.equal(getRevision({ revision: -1 }), 0);
+  assert.equal(getRevision({ revision: -42 }), 0);
+
+  assert.equal(getRevision({ revision: 3.14 }), 0);
+
+  assert.equal(getRevision({ revision: "42" }), 0);
+  assert.equal(getRevision({ revision: "0" }), 0);
+
+  assert.equal(getRevision({ revision: Number.MAX_SAFE_INTEGER + 1 }), 0);
 });
