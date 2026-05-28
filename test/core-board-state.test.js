@@ -5,6 +5,7 @@ const {
   applyBoardOps,
   normalizeSavedBoard,
   publicBoardState,
+  publicBoardChanges,
   validateBoardState,
 } = require("../core/board-state");
 
@@ -161,6 +162,49 @@ test("public board state strips edit tokens", () => {
 
   assert.equal(state.editToken, "abcdefghijklmnopqrstuvwxyz123456");
   assert.equal(publicBoardState(state).editToken, undefined);
+});
+
+test("public board changes filters changes after a specific revision", () => {
+  const state = normalizeSavedBoard({
+    changes: [
+      { revision: 1, opId: "op-1", clientId: "client-a", ops: [] },
+      { revision: 2, opId: "op-2", clientId: "client-a", ops: [] },
+      { revision: 3, opId: "op-3", clientId: "client-a", ops: [] },
+    ],
+  });
+
+  const changes = publicBoardChanges(state, 1);
+  assert.equal(changes.length, 2);
+  assert.equal(changes[0].revision, 2);
+  assert.equal(changes[1].revision, 3);
+});
+
+test("public board changes returns all changes if sinceRevision is 0", () => {
+  const state = normalizeSavedBoard({
+    changes: [
+      { revision: 1, opId: "op-1", clientId: "client-a", ops: [] },
+      { revision: 2, opId: "op-2", clientId: "client-a", ops: [] },
+    ],
+  });
+
+  const changes = publicBoardChanges(state, 0);
+  assert.equal(changes.length, 2);
+  assert.equal(changes[0].revision, 1);
+  assert.equal(changes[1].revision, 2);
+});
+
+test("public board changes handles state with no changes", () => {
+  const state = normalizeSavedBoard({
+    changes: undefined,
+  });
+
+  const changes = publicBoardChanges(state, 0);
+  assert.equal(changes.length, 0);
+});
+
+test("public board changes handles empty state", () => {
+  const changes = publicBoardChanges(undefined, 0);
+  assert.equal(changes.length, 0);
 });
 
 test("core patch operations merge independent item edits", () => {
