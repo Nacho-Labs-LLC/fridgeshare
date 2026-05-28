@@ -229,6 +229,15 @@ function boardIdFromPathname(pathname) {
   return match ? match[1] : "";
 }
 
+function firstDateString(...dates) {
+  for (const date of dates) {
+    if (date) {
+      return date;
+    }
+  }
+  return "";
+}
+
 function bootstrapPayload(pathname = "/") {
   return {
     mode: "selfhost",
@@ -254,7 +263,7 @@ async function listSelfhostBoards(request) {
       slug: board.slug,
       title: board.title,
       createdAt: board.createdAt,
-      updatedAt: board.updatedAt || board.createdAt,
+      updatedAt: firstDateString(board.updatedAt, board.createdAt),
       canEdit: false,
     });
   }
@@ -264,8 +273,8 @@ async function listSelfhostBoards(request) {
     const board = {
       slug: saved.id,
       title: existing.title || titleFromSlug(saved.id),
-      createdAt: existing.createdAt || saved.savedAt || saved.updatedAt || "",
-      updatedAt: saved.updatedAt || saved.savedAt || existing.updatedAt || existing.createdAt || "",
+      createdAt: firstDateString(existing.createdAt, saved.savedAt, saved.updatedAt),
+      updatedAt: firstDateString(saved.updatedAt, saved.savedAt, existing.updatedAt, existing.createdAt),
       canEdit: canShowEditLinks && Boolean(saved.editToken),
     };
     if (board.canEdit) {
@@ -275,7 +284,7 @@ async function listSelfhostBoards(request) {
   }
 
   return Array.from(bySlug.values())
-    .sort((a, b) => (b.updatedAt || b.createdAt || "").localeCompare(a.updatedAt || a.createdAt || ""));
+    .sort((a, b) => firstDateString(b.updatedAt, b.createdAt).localeCompare(firstDateString(a.updatedAt, a.createdAt)));
 }
 
 async function handleBootstrap(request, response, url) {
