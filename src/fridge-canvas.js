@@ -373,24 +373,26 @@ class FridgeCanvas {
   }
 
   applyRemoteOps(ops) {
+    const itemsMap = new Map(this.items.map(item => [item.id, item]));
+    let itemsChanged = false;
+
     for (const op of ops) {
       if (op.type === "board.setTheme") {
         this.setSurfaceTheme(op.theme, { skipSave: true });
       } else if (op.type === "item.add" && op.item) {
-        const existing = this.items.findIndex((item) => item.id === op.item.id);
         const item = window.FridgeItems.itemFromJSON(op.item);
         if (!item) {
           continue;
         }
-        if (existing >= 0) {
-          this.items[existing] = item;
-        } else {
-          this.items.push(item);
-        }
+        itemsMap.set(item.id, item);
+        itemsChanged = true;
       } else if (op.type === "item.delete") {
-        this.items = this.items.filter((item) => item.id !== op.id);
+        if (itemsMap.has(op.id)) {
+          itemsMap.delete(op.id);
+          itemsChanged = true;
+        }
       } else if (op.type === "item.update") {
-        const item = this.items.find((candidate) => candidate.id === op.id);
+        const item = itemsMap.get(op.id);
         if (item && op.patch) {
           Object.assign(item, op.patch);
           if (item.type === "polaroid" && Object.prototype.hasOwnProperty.call(op.patch, "src")) {
@@ -403,11 +405,17 @@ class FridgeCanvas {
           }
         }
       } else if (op.type === "item.bringToFront") {
-        const item = this.items.find((candidate) => candidate.id === op.id);
+        const item = itemsMap.get(op.id);
         if (item) {
-          this.bringToFront(item, { skipSave: true });
+          itemsMap.delete(item.id);
+          itemsMap.set(item.id, item);
+          itemsChanged = true;
         }
       }
+    }
+
+    if (itemsChanged) {
+      this.items = Array.from(itemsMap.values());
     }
   }
 
