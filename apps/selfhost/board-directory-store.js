@@ -82,7 +82,7 @@ class BoardDirectoryStore {
 
   async writeData(data) {
     await fsp.mkdir(path.dirname(this.filePath), { recursive: true });
-    const tmpPath = `${this.filePath}.${process.pid}.tmp`;
+    const tmpPath = `${this.filePath}.${process.pid}.${crypto.randomBytes(8).toString("hex")}.tmp`;
     await fsp.writeFile(tmpPath, JSON.stringify(data, null, 2));
     await fsp.rename(tmpPath, this.filePath);
   }

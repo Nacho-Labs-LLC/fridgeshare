@@ -1,3 +1,4 @@
+const crypto = require("crypto");
 const fsp = require("fs/promises");
 const path = require("path");
 const { normalizeSavedBoard } = require("../../core/board-state");
@@ -82,7 +83,7 @@ class FileBoardStore {
     }
 
     await fsp.mkdir(this.dataDir, { recursive: true });
-    const tmpPath = `${filePath}.${process.pid}.tmp`;
+    const tmpPath = `${filePath}.${process.pid}.${crypto.randomBytes(8).toString("hex")}.tmp`;
     await fsp.writeFile(tmpPath, JSON.stringify(payload, null, 2));
     await fsp.rename(tmpPath, filePath);
     return { ok: true, value: normalizeSavedBoard(payload, id) };
