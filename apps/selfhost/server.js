@@ -762,15 +762,12 @@ async function resolveAdminToken() {
   SELFHOST_ADMIN_TOKEN = randomToken();
   await fsp.mkdir(path.dirname(ADMIN_TOKEN_FILE), { recursive: true });
   await fsp.writeFile(ADMIN_TOKEN_FILE, SELFHOST_ADMIN_TOKEN + "\n", { mode: 0o600 });
-  console.log(`Admin token generated — retrieve it with: cat ${ADMIN_TOKEN_FILE}`);
 }
 
 if (require.main === module) {
   resolveAdminToken()
     .then(() => {
-      server.listen(PORT, () => {
-        console.log(`FridgeShare server is running at http://localhost:${PORT}`);
-      });
+      server.listen(PORT);
     })
     .catch((error) => {
       console.error("Failed to resolve admin token:", error);
