@@ -8,6 +8,7 @@ const BOARD_ID_PATTERN = /^[a-z0-9-]{4,64}$/;
 class FileBoardStore {
   constructor({ dataDir }) {
     this.dataDir = dataDir;
+    this.cache = new Map();
   }
 
   boardPath(id) {
@@ -29,6 +30,8 @@ class FileBoardStore {
     }
 
     const readPromises = [];
+    const cachedResults = [];
+
     for (const entry of entries) {
       if (!entry.isFile() || path.extname(entry.name) !== ".json") {
         continue;
@@ -39,11 +42,17 @@ class FileBoardStore {
         continue;
       }
 
-      readPromises.push(this.read(id));
+      if (this.cache.has(id)) {
+        cachedResults.push(this.cache.get(id));
+      } else {
+        readPromises.push(this.read(id));
+      }
     }
 
     const results = await Promise.all(readPromises);
-    return results.filter((r) => r.ok).map((r) => r.value);
+    const validResults = results.filter((r) => r.ok).map((r) => r.value);
+
+    return [...cachedResults, ...validResults];
   }
 
   async read(id) {
@@ -52,9 +61,15 @@ class FileBoardStore {
       return { ok: false, status: 400, error: "Invalid fridge id." };
     }
 
+    if (this.cache.has(id)) {
+      return { ok: true, value: this.cache.get(id) };
+    }
+
     try {
       const raw = await fsp.readFile(filePath, "utf8");
-      return { ok: true, value: normalizeSavedBoard(JSON.parse(raw), id) };
+      const value = normalizeSavedBoard(JSON.parse(raw), id);
+      this.cache.set(id, value);
+      return { ok: true, value };
     } catch (error) {
       if (error.code === "ENOENT") {
         return { ok: false, status: 404, error: "Fridge not found." };
@@ -86,7 +101,9 @@ class FileBoardStore {
     const tmpPath = `${filePath}.${process.pid}.${crypto.randomBytes(8).toString("hex")}.tmp`;
     await fsp.writeFile(tmpPath, JSON.stringify(payload, null, 2));
     await fsp.rename(tmpPath, filePath);
-    return { ok: true, value: normalizeSavedBoard(payload, id) };
+    const value = normalizeSavedBoard(payload, id);
+    this.cache.set(id, value);
+    return { ok: true, value };
   }
 
   async delete(id) {
@@ -97,6 +114,7 @@ class FileBoardStore {
 
     try {
       await fsp.unlink(filePath);
+      this.cache.delete(id);
     } catch (error) {
       if (error.code !== "ENOENT") {
         throw error;
