@@ -7,16 +7,26 @@ const BOARD_SLUG_PATTERN = /^[a-z0-9][a-z0-9-]{2,62}[a-z0-9]$/;
 class BoardDirectoryStore {
   constructor({ filePath }) {
     this.filePath = filePath;
+    this._boardsCache = null;
+  }
+
+  async _getBoards() {
+    if (this._boardsCache) {
+      return this._boardsCache;
+    }
+    const data = await this.readData();
+    this._boardsCache = data.boards;
+    return this._boardsCache;
   }
 
   async list() {
-    const data = await this.readData();
-    return data.boards.sort((a, b) => (b.updatedAt || b.createdAt).localeCompare(a.updatedAt || a.createdAt));
+    const boards = await this._getBoards();
+    return [...boards].sort((a, b) => (b.updatedAt || b.createdAt).localeCompare(a.updatedAt || a.createdAt));
   }
 
   async get(slug) {
-    const data = await this.readData();
-    return data.boards.find((board) => board.slug === slug) || null;
+    const boards = await this._getBoards();
+    return boards.find((board) => board.slug === slug) || null;
   }
 
   async create({ slug, title }) {
@@ -85,6 +95,7 @@ class BoardDirectoryStore {
     const tmpPath = `${this.filePath}.${process.pid}.${crypto.randomBytes(8).toString("hex")}.tmp`;
     await fsp.writeFile(tmpPath, JSON.stringify(data, null, 2));
     await fsp.rename(tmpPath, this.filePath);
+    this._boardsCache = null;
   }
 }
 
