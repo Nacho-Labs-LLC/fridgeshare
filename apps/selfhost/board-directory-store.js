@@ -7,11 +7,29 @@ const BOARD_SLUG_PATTERN = /^[a-z0-9][a-z0-9-]{2,62}[a-z0-9]$/;
 class BoardDirectoryStore {
   constructor({ filePath }) {
     this.filePath = filePath;
+    this._cachedList = null;
+    this._cachedMtimeMs = -1;
   }
 
   async list() {
+    let mtimeMs = -1;
+    try {
+      const stat = await fsp.stat(this.filePath);
+      mtimeMs = stat.mtimeMs;
+    } catch (err) {
+      if (err.code !== "ENOENT") throw err;
+    }
+
+    if (this._cachedList && this._cachedMtimeMs === mtimeMs) {
+      return this._cachedList;
+    }
+
     const data = await this.readData();
-    return data.boards.sort((a, b) => (b.updatedAt || b.createdAt).localeCompare(a.updatedAt || a.createdAt));
+    const sorted = data.boards.sort((a, b) => (b.updatedAt || b.createdAt).localeCompare(a.updatedAt || a.createdAt));
+
+    this._cachedList = sorted;
+    this._cachedMtimeMs = mtimeMs;
+    return sorted;
   }
 
   async get(slug) {
@@ -85,6 +103,8 @@ class BoardDirectoryStore {
     const tmpPath = `${this.filePath}.${process.pid}.${crypto.randomBytes(8).toString("hex")}.tmp`;
     await fsp.writeFile(tmpPath, JSON.stringify(data, null, 2));
     await fsp.rename(tmpPath, this.filePath);
+    this._cachedList = null;
+    this._cachedMtimeMs = -1;
   }
 }
 
