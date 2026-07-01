@@ -22,6 +22,7 @@ const UPLOAD_DIR = process.env.FRIDGE_UPLOAD_DIR || path.join(ROOT, "server", "d
 let SELFHOST_ADMIN_TOKEN = process.env.SELFHOST_ADMIN_TOKEN || "";
 const ADMIN_TOKEN_FILE = path.join(path.dirname(DIRECTORY_PATH), ".admin-token");
 const TRUST_PROXY = process.env.FRIDGE_TRUST_PROXY === "1";
+const TRUSTED_PROXIES = process.env.FRIDGE_TRUSTED_PROXIES ? process.env.FRIDGE_TRUSTED_PROXIES.split(",").map((s) => s.trim()) : [];
 const MAX_BODY_BYTES = 4 * 1024 * 1024;
 const MAX_UPLOAD_BYTES = Number(process.env.FRIDGE_MAX_UPLOAD_BYTES || MAX_BODY_BYTES);
 const WRITE_RATE_WINDOW_MS = Number(process.env.FRIDGE_WRITE_RATE_WINDOW_MS || 60_000);
@@ -90,6 +91,24 @@ function sendJson(response, status, value) {
   });
 }
 
+function isTrustedProxy(ip) {
+  if (TRUSTED_PROXIES.length > 0) {
+    return TRUSTED_PROXIES.includes(ip);
+  }
+  return (
+    ip === "127.0.0.1" ||
+    ip === "::1" ||
+    ip === "::ffff:127.0.0.1" ||
+    ip.startsWith("10.") ||
+    ip.startsWith("192.168.") ||
+    /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(ip) ||
+    /^fd[0-9a-f]{2}:/.test(ip) ||
+    /^::ffff:10\./.test(ip) ||
+    /^::ffff:192\.168\./.test(ip) ||
+    /^::ffff:172\.(1[6-9]|2[0-9]|3[0-1])\./.test(ip)
+  );
+}
+
 function isBoardSlug(value) {
   return BOARD_SLUG_PATTERN.test(value);
 }
@@ -130,10 +149,18 @@ function canWriteBoard(request, saved) {
 
 function clientKey(request, boardId) {
   let ip = request.socket.remoteAddress || "unknown";
-  if (TRUST_PROXY) {
+  if (TRUST_PROXY && isTrustedProxy(ip)) {
     const forwardedFor = request.headers["x-forwarded-for"];
     if (typeof forwardedFor === "string") {
-      ip = forwardedFor.split(",")[0].trim() || ip;
+      const parts = forwardedFor.split(",").map((s) => s.trim()).filter(Boolean);
+      let realIp = null;
+      for (let i = parts.length - 1; i >= 0; i -= 1) {
+        if (!isTrustedProxy(parts[i])) {
+          realIp = parts[i];
+          break;
+        }
+      }
+      ip = realIp || (parts.length > 0 ? parts[0] : ip);
     }
   }
   return `${ip}:${boardId}`;
