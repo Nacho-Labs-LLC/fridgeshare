@@ -415,3 +415,8 @@ test("static path traversal is blocked", async () => {
   const response = await fetch(`${global.baseUrl}/..%2Fpackage.json`);
   assert.equal(response.status, 403);
 });
+
+test("malformed URI components return 404", async () => {
+  const response = await fetch(`${global.baseUrl}/%E0%A4%A`);
+  assert.equal(response.status, 404);
+});
