@@ -762,7 +762,6 @@ async function resolveAdminToken() {
   SELFHOST_ADMIN_TOKEN = randomToken();
   await fsp.mkdir(path.dirname(ADMIN_TOKEN_FILE), { recursive: true });
   await fsp.writeFile(ADMIN_TOKEN_FILE, SELFHOST_ADMIN_TOKEN + "\n", { mode: 0o600 });
-  console.log(`Admin token generated — retrieve it with: cat ${ADMIN_TOKEN_FILE}`);
 }
 
 if (require.main === module) {
