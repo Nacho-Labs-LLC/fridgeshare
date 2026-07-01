@@ -767,9 +767,7 @@ async function resolveAdminToken() {
 if (require.main === module) {
   resolveAdminToken()
     .then(() => {
-      server.listen(PORT, () => {
-        console.log(`FridgeShare server is running at http://localhost:${PORT}`);
-      });
+      server.listen(PORT);
     })
     .catch((error) => {
       console.error("Failed to resolve admin token:", error);
