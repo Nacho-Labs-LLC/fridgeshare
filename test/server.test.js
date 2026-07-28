@@ -108,6 +108,33 @@ test("self-host board directory creates and lists boards", async () => {
   assert.equal(listed.body.boards.find((board) => board.slug === "kitchen-board").canEdit, false);
 });
 
+test("self-host created boards accept the returned edit token for subsequent saves", async () => {
+  const created = await request(global.baseUrl, "/api/selfhost/boards", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title: "Token Board", slug: "token-board" }),
+  });
+
+  assert.equal(created.response.status, 201);
+  assert.match(created.body.editToken, /^[A-Za-z0-9_-]{24,96}$/);
+
+  const saved = await request(global.baseUrl, "/api/boards/token-board", {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Fridge-Edit-Token": created.body.editToken,
+    },
+    body: JSON.stringify({
+      baseRevision: 0,
+      theme: "classic-white",
+      items: [],
+    }),
+  });
+
+  assert.equal(saved.response.status, 200);
+  assert.equal(saved.body.revision, 1);
+});
+
 test("self-host board directory lists saved board files without metadata", async () => {
   const saved = await request(global.baseUrl, "/api/boards/saved-only-board", {
     method: "PUT",
