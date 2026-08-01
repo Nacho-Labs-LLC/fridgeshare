@@ -380,6 +380,12 @@ test("an editor can use each non-photo creation tool, change the surface, and ro
   await expect(page.locator("#mode-pill")).toHaveText(/^Saved/);
 
   await page.getByRole("button", { name: "Add C magnet" }).click();
+  await page.getByRole("tab", { name: "Notes" }).click();
+  await page.getByRole("button", { name: "Add Sticky Note" }).click();
+  const noteEditor = page.locator("textarea.note-edit-overlay");
+  await expect(noteEditor).toBeVisible();
+  await noteEditor.fill("Dinner at 6");
+  await noteEditor.press("Escape");
   await page.getByRole("tab", { name: "Emoji" }).click();
   await expect(page.getByRole("button", { name: "Smileys" })).toBeVisible();
   await page.getByRole("button", { name: "😀", exact: true }).click();
@@ -393,7 +399,7 @@ test("an editor can use each non-photo creation tool, change the surface, and ro
     types: window.openFridge.items.map((item) => item.type),
   }))).toEqual(expect.objectContaining({
     theme: "brushed-stainless",
-    types: expect.arrayContaining(["alphabet", "emoji", "dryEraseBoard"]),
+    types: expect.arrayContaining(["alphabet", "note", "emoji", "dryEraseBoard"]),
   }));
 
   const download = page.waitForEvent("download");
@@ -403,8 +409,13 @@ test("an editor can use each non-photo creation tool, change the surface, and ro
   const exported = JSON.parse(await fs.readFile(await exportFile.path(), "utf8"));
   assert.equal(exported.theme, "brushed-stainless");
   assert.deepEqual(
-    exported.items.map((item) => item.type).sort(),
-    ["alphabet", "dryEraseBoard", "emoji"],
+    exported.items.map((item) => ({ type: item.type, text: item.text })).sort((a, b) => a.type.localeCompare(b.type)),
+    [
+      { type: "alphabet", text: undefined },
+      { type: "dryEraseBoard", text: undefined },
+      { type: "emoji", text: undefined },
+      { type: "note", text: "Dinner at 6" },
+    ],
   );
 
   const fileChooser = page.waitForEvent("filechooser");
@@ -425,4 +436,50 @@ test("an editor can use each non-photo creation tool, change the surface, and ro
     theme: "retro-mint",
     items: [{ id: "imported-note", type: "note", text: "Imported" }],
   });
+});
+
+test("an editor can draw on a whiteboard and reload the saved stroke", async ({ page }) => {
+  const slug = `e2e-drawing-${Date.now()}`;
+  await page.goto(baseUrl);
+  await page.getByLabel("Board title").fill("E2E Drawing");
+  await page.getByLabel("Board slug").fill(slug);
+  await page.getByRole("button", { name: "Create" }).click();
+  await expect(page).toHaveURL(new RegExp(`/b/${slug}#[A-Za-z0-9_-]{24,96}$`));
+
+  await page.getByRole("tab", { name: "Boards" }).click();
+  await page.getByRole("button", { name: "Add Whiteboard" }).click();
+  const board = await page.evaluate(() => {
+    const fridge = window.openFridge;
+    const item = fridge.items.find((candidate) => candidate.type === "dryEraseBoard");
+    const rect = fridge.canvas.getBoundingClientRect();
+    const point = fridge.worldToViewport({ x: item.x, y: item.y });
+    return { id: item.id, x: rect.left + point.x, y: rect.top + point.y };
+  });
+
+  await page.mouse.dblclick(board.x, board.y);
+  await expect(page.getByRole("toolbar", { name: "Drawing toolbar" })).toBeVisible();
+  await page.getByRole("button", { name: "Blue marker" }).click();
+  await page.mouse.move(board.x - 60, board.y - 20);
+  await page.mouse.down();
+  await page.mouse.move(board.x + 60, board.y + 20, { steps: 8 });
+  await page.mouse.up();
+  await page.getByRole("button", { name: "Done" }).click();
+  await expect(page.getByRole("toolbar", { name: "Drawing toolbar" })).toHaveCount(0);
+
+  await expect.poll(() => page.evaluate((id) => {
+    const item = window.openFridge.items.find((candidate) => candidate.id === id);
+    return item?.strokes?.map((stroke) => ({ color: stroke.color, points: stroke.points.length })) || [];
+  }, board.id)).toEqual([{ color: "#1a5fa8", points: 9 }]);
+  await expect.poll(async () => page.evaluate(async (id) => {
+    const response = await fetch(`/api/boards/${location.pathname.split("/").pop()}`);
+    const state = await response.json();
+    const item = state.items.find((candidate) => candidate.id === id);
+    return item?.strokes?.[0]?.points?.length || 0;
+  }, board.id)).toBe(9);
+
+  await page.reload();
+  await expect.poll(() => page.evaluate((id) => {
+    const item = window.openFridge.items.find((candidate) => candidate.id === id);
+    return item?.strokes?.[0]?.color || "";
+  }, board.id)).toBe("#1a5fa8");
 });
