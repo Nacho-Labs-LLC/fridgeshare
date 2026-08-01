@@ -506,3 +506,207 @@ test("the local-only fridge persists browser state without calling the shared-bo
   await expect.poll(() => page.evaluate(() => window.openFridge.items.map((item) => item.text || ""))).toContain("Only on this browser");
   assert.deepEqual(boardApiRequests, []);
 });
+
+test("a view-only link exposes no mutation controls and cannot alter the shared board", async ({ page }) => {
+  const slug = `e2e-viewer-lock-${Date.now()}`;
+  await page.goto(baseUrl);
+  await page.getByLabel("Board title").fill("E2E Viewer Lock");
+  await page.getByLabel("Board slug").fill(slug);
+  await page.getByRole("button", { name: "Create" }).click();
+  await expect(page).toHaveURL(new RegExp(`/b/${slug}#[A-Za-z0-9_-]{24,96}$`));
+  const initialState = await page.evaluate(async () => {
+    const response = await fetch(`/api/boards/${location.pathname.split("/").pop()}`);
+    return response.json();
+  });
+
+  const viewer = await page.context().newPage();
+  try {
+    await viewer.goto(`${baseUrl}/b/${slug}`);
+    await expect(viewer.locator("#mode-pill")).toHaveText(/^View only/);
+    for (const selector of [
+      "#alphabet-buttons",
+      "#magnet-style-selector",
+      "#magnet-size-selector",
+      "#paper-style-selector",
+      "#note-size-selector",
+      "#photo-style-selector",
+      "#photo-size-selector",
+      "#emoji-category-bar",
+      "#emoji-grid",
+      "#surface-theme-selector",
+      "#export-button",
+      "#import-button",
+      "#reset-button",
+      "#add-note-button",
+      "#add-photo-button",
+      "#add-board-button",
+    ]) {
+      await expect(viewer.locator(selector)).toBeHidden();
+    }
+    const beforePan = await viewer.evaluate(() => ({ ...window.openFridge.camera }));
+    const canvasBox = await viewer.locator("#fridge-canvas").boundingBox();
+    await viewer.mouse.move(canvasBox.x + 120, canvasBox.y + 120);
+    await viewer.mouse.down();
+    await viewer.mouse.move(canvasBox.x + 180, canvasBox.y + 160, { steps: 4 });
+    await viewer.mouse.up();
+    await expect.poll(() => viewer.evaluate(() => ({ ...window.openFridge.camera }))).not.toEqual(beforePan);
+  } finally {
+    await viewer.close();
+  }
+
+  const afterState = await page.evaluate(async () => {
+    const response = await fetch(`/api/boards/${location.pathname.split("/").pop()}`);
+    return response.json();
+  });
+  assert.deepEqual(afterState.items, initialState.items);
+  assert.equal(afterState.theme, initialState.theme);
+});
+
+test("reset preserves a board when cancelled and restores the starter board when confirmed", async ({ page }) => {
+  const slug = `e2e-reset-${Date.now()}`;
+  await page.goto(baseUrl);
+  await page.getByLabel("Board title").fill("E2E Reset");
+  await page.getByLabel("Board slug").fill(slug);
+  await page.getByRole("button", { name: "Create" }).click();
+  await expect(page).toHaveURL(new RegExp(`/b/${slug}#[A-Za-z0-9_-]{24,96}$`));
+  await page.getByRole("button", { name: "Add A magnet" }).click();
+  await expect.poll(() => page.evaluate(() => window.openFridge.items.some((item) => item.type === "alphabet"))).toBe(true);
+  const beforeCancel = await page.evaluate(() => window.openFridge.items.map((item) => item.id));
+
+  page.once("dialog", (dialog) => dialog.dismiss());
+  await page.getByRole("button", { name: "Reset" }).click();
+  await expect.poll(() => page.evaluate(() => window.openFridge.items.map((item) => item.id))).toEqual(beforeCancel);
+
+  page.once("dialog", (dialog) => dialog.accept());
+  await page.getByRole("button", { name: "Reset" }).click();
+  await expect(page.locator("#toast")).toHaveText("Fridge reset.");
+  await expect.poll(() => page.evaluate(() => ({
+    theme: window.openFridge.currentSurfaceTheme,
+    types: window.openFridge.items.map((item) => item.type).sort(),
+  }))).toEqual({
+    theme: "classic-white",
+    types: ["alphabet", "note"],
+  });
+  await expect.poll(async () => page.evaluate(async () => {
+    const response = await fetch(`/api/boards/${location.pathname.split("/").pop()}`);
+    if (!response.ok) return null;
+    const state = await response.json();
+    return { theme: state.theme, types: state.items.map((item) => item.type).sort() };
+  })).toEqual({ theme: "classic-white", types: ["alphabet", "note"] });
+  await page.reload();
+  await expect.poll(() => page.evaluate(() => window.openFridge.items.map((item) => item.type).sort())).toEqual(["alphabet", "note"]);
+});
+
+test("an exported mixed board restores through reset and import with remote persistence", async ({ page }) => {
+  const slug = `e2e-backup-${Date.now()}`;
+  await page.goto(baseUrl);
+  await page.getByLabel("Board title").fill("E2E Backup");
+  await page.getByLabel("Board slug").fill(slug);
+  await page.getByRole("button", { name: "Create" }).click();
+  await expect(page).toHaveURL(new RegExp(`/b/${slug}#[A-Za-z0-9_-]{24,96}$`));
+  await page.getByRole("button", { name: "Add Z magnet" }).click();
+  await page.getByRole("tab", { name: "Notes" }).click();
+  await page.getByRole("button", { name: "Add Sticky Note" }).click();
+  await page.locator("textarea.note-edit-overlay").fill("Back this up");
+  await page.locator("textarea.note-edit-overlay").press("Escape");
+  await page.getByRole("tab", { name: "Emoji" }).click();
+  await page.getByRole("button", { name: "Smileys" }).waitFor();
+  await page.getByRole("button", { name: "😎", exact: true }).click();
+  await page.getByRole("tab", { name: "Surface" }).click();
+  await page.getByRole("button", { name: "Retro Mint" }).click();
+
+  await expect.poll(() => page.evaluate(() => ({
+    theme: window.openFridge.currentSurfaceTheme,
+    items: window.openFridge.items.map((item) => ({ type: item.type, text: item.text, label: item.label, emoji: item.emoji })),
+  }))).toEqual(expect.objectContaining({
+    theme: "retro-mint",
+    items: expect.arrayContaining([
+      expect.objectContaining({ type: "alphabet", label: "Z" }),
+      expect.objectContaining({ type: "note", text: "Back this up" }),
+      expect.objectContaining({ type: "emoji", emoji: "😎" }),
+    ]),
+  }));
+
+  const downloadPromise = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Export" }).click();
+  const download = await downloadPromise;
+  const backupPath = await download.path();
+  const backup = JSON.parse(await fs.readFile(backupPath, "utf8"));
+
+  page.once("dialog", (dialog) => dialog.accept());
+  await page.getByRole("button", { name: "Reset" }).click();
+  await expect(page.locator("#toast")).toHaveText("Fridge reset.");
+  await expect.poll(() => page.evaluate(() => window.openFridge.currentSurfaceTheme)).toBe("classic-white");
+
+  const chooser = page.waitForEvent("filechooser");
+  await page.getByRole("button", { name: "Import" }).click();
+  await (await chooser).setFiles(backupPath);
+  await expect(page.locator("#toast")).toHaveText("Fridge imported.");
+  const expected = {
+    theme: backup.theme,
+    items: backup.items.map((item) => ({ type: item.type, text: item.text, label: item.label, emoji: item.emoji })),
+  };
+  await expect.poll(() => page.evaluate(() => ({
+    theme: window.openFridge.currentSurfaceTheme,
+    items: window.openFridge.items.map((item) => ({ type: item.type, text: item.text, label: item.label, emoji: item.emoji })),
+  }))).toEqual(expected);
+  await expect.poll(async () => page.evaluate(async () => {
+    const response = await fetch(`/api/boards/${location.pathname.split("/").pop()}`);
+    if (!response.ok) return null;
+    const state = await response.json();
+    return { theme: state.theme, items: state.items.map((item) => ({ type: item.type, text: item.text, label: item.label, emoji: item.emoji })) };
+  })).toEqual(expected);
+  await page.reload();
+  await expect.poll(() => page.evaluate(() => ({
+    theme: window.openFridge.currentSurfaceTheme,
+    items: window.openFridge.items.map((item) => ({ type: item.type, text: item.text, label: item.label, emoji: item.emoji })),
+  }))).toEqual(expected);
+});
+
+test("a stale editor can explicitly overwrite the shared board with an imported backup", async ({ page, browser }) => {
+  const slug = `e2e-force-overwrite-${Date.now()}`;
+  await page.goto(baseUrl);
+  await page.getByLabel("Board title").fill("E2E Force Overwrite");
+  await page.getByLabel("Board slug").fill(slug);
+  await page.getByRole("button", { name: "Create" }).click();
+  await expect(page).toHaveURL(new RegExp(`/b/${slug}#[A-Za-z0-9_-]{24,96}$`));
+
+  const peerContext = await browser.newContext();
+  const peer = await peerContext.newPage();
+  try {
+    await peer.goto(page.url());
+    await peer.getByRole("tab", { name: "Notes" }).click();
+    await peer.getByRole("button", { name: "Add Sticky Note" }).click();
+    await peer.locator("textarea.note-edit-overlay").press("Escape");
+    await expect.poll(async () => peer.evaluate(async () => {
+      const response = await fetch(`/api/boards/${location.pathname.split("/").pop()}`);
+      const state = await response.json();
+      return state.items.filter((item) => item.type === "note").length;
+    })).toBe(1);
+
+    const chooser = page.waitForEvent("filechooser");
+    const conflict = page.waitForEvent("dialog");
+    await page.getByRole("button", { name: "Import" }).click();
+    await (await chooser).setFiles({
+      name: "empty-backup.fridge",
+      mimeType: "application/json",
+      buffer: Buffer.from(JSON.stringify({ theme: "warm-cream", items: [] })),
+    });
+    const dialog = await conflict;
+    assert.match(dialog.message(), /board changed on the server/i);
+    await dialog.accept();
+
+    await expect(page.locator("#toast")).toHaveText("Your updates were sent.");
+    await expect.poll(async () => page.evaluate(async () => {
+      const response = await fetch(`/api/boards/${location.pathname.split("/").pop()}`);
+      const state = await response.json();
+      return { theme: state.theme, items: state.items };
+    })).toEqual({ theme: "warm-cream", items: [] });
+    await expect.poll(() => peer.evaluate(() => ({
+      theme: window.openFridge.currentSurfaceTheme,
+      items: window.openFridge.items.length,
+    })), { timeout: 10_000 }).toEqual({ theme: "warm-cream", items: 0 });
+  } finally {
+    await peerContext.close();
+  }
+});
