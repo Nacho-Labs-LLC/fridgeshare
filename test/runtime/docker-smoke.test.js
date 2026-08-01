@@ -12,6 +12,9 @@ const repoRoot = path.resolve(__dirname, "..", "..");
 const runId = `${process.pid}-${randomUUID().slice(0, 8)}`;
 const containerName = `fridgeshare-runtime-smoke-${runId}`;
 const builtImage = `fridgeshare-runtime-smoke:${runId}`;
+const hostUserArgs = process.platform === "win32"
+  ? []
+  : ["--user", `${process.getuid()}:${process.getgid()}`];
 
 async function docker(args, options = {}) {
   return execFileAsync("docker", args, {
@@ -70,6 +73,7 @@ test("Docker image serves the self-host UI and bootstrap API with isolated state
       "run",
       "--detach",
       "--name", containerName,
+      ...hostUserArgs,
       "--label", "fridgeshare.runtime-smoke=true",
       "--publish", "127.0.0.1::4173",
       "--volume", `${dataDir}:/app/server/data`,
