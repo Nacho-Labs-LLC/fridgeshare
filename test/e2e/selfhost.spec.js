@@ -506,3 +506,58 @@ test("the local-only fridge persists browser state without calling the shared-bo
   await expect.poll(() => page.evaluate(() => window.openFridge.items.map((item) => item.text || ""))).toContain("Only on this browser");
   assert.deepEqual(boardApiRequests, []);
 });
+
+test("a view-only link exposes no mutation controls and cannot alter the shared board", async ({ page }) => {
+  const slug = `e2e-viewer-lock-${Date.now()}`;
+  await page.goto(baseUrl);
+  await page.getByLabel("Board title").fill("E2E Viewer Lock");
+  await page.getByLabel("Board slug").fill(slug);
+  await page.getByRole("button", { name: "Create" }).click();
+  await expect(page).toHaveURL(new RegExp(`/b/${slug}#[A-Za-z0-9_-]{24,96}$`));
+  const initialState = await page.evaluate(async () => {
+    const response = await fetch(`/api/boards/${location.pathname.split("/").pop()}`);
+    return response.json();
+  });
+
+  const viewer = await page.context().newPage();
+  try {
+    await viewer.goto(`${baseUrl}/b/${slug}`);
+    await expect(viewer.locator("#mode-pill")).toHaveText(/^View only/);
+    for (const selector of [
+      "#alphabet-buttons",
+      "#magnet-style-selector",
+      "#magnet-size-selector",
+      "#paper-style-selector",
+      "#note-size-selector",
+      "#photo-style-selector",
+      "#photo-size-selector",
+      "#emoji-category-bar",
+      "#emoji-grid",
+      "#surface-theme-selector",
+      "#export-button",
+      "#import-button",
+      "#reset-button",
+      "#add-note-button",
+      "#add-photo-button",
+      "#add-board-button",
+    ]) {
+      await expect(viewer.locator(selector)).toBeHidden();
+    }
+    const beforePan = await viewer.evaluate(() => ({ ...window.openFridge.camera }));
+    const canvasBox = await viewer.locator("#fridge-canvas").boundingBox();
+    await viewer.mouse.move(canvasBox.x + 120, canvasBox.y + 120);
+    await viewer.mouse.down();
+    await viewer.mouse.move(canvasBox.x + 180, canvasBox.y + 160, { steps: 4 });
+    await viewer.mouse.up();
+    await expect.poll(() => viewer.evaluate(() => ({ ...window.openFridge.camera }))).not.toEqual(beforePan);
+  } finally {
+    await viewer.close();
+  }
+
+  const afterState = await page.evaluate(async () => {
+    const response = await fetch(`/api/boards/${location.pathname.split("/").pop()}`);
+    return response.json();
+  });
+  assert.deepEqual(afterState.items, initialState.items);
+  assert.equal(afterState.theme, initialState.theme);
+});
