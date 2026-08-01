@@ -11,7 +11,7 @@ No accounts. No tracking. Your data stays on your server.
 No git clone needed. Download the compose file and start:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/nacho-labs-llc/fridgeshare/main/docker-compose.yml -o docker-compose.yml
+curl -fsSL https://raw.githubusercontent.com/nacho-labs-llc/fridgeshare/master/docker-compose.yml -o docker-compose.yml
 docker compose up -d
 ```
 

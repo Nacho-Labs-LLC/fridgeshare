@@ -5,7 +5,7 @@ The self-hosted app is the complete public version of FridgeShare. It runs as a 
 ## Quick Start
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/nacho-labs-llc/fridgeshare/main/docker-compose.yml -o docker-compose.yml
+curl -fsSL https://raw.githubusercontent.com/nacho-labs-llc/fridgeshare/master/docker-compose.yml -o docker-compose.yml
 docker compose up -d
 ```
 
