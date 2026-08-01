@@ -497,7 +497,10 @@ test("the local-only fridge persists browser state without calling the shared-bo
   await noteEditor.fill("Only on this browser");
   await noteEditor.press("Escape");
   await expect.poll(() => page.evaluate(() => window.openFridge.items.some((item) => item.text === "Only on this browser"))).toBe(true);
-  await expect(page.locator("#mode-pill")).toHaveText(/^Saved - local$/);
+  await expect.poll(() => page.evaluate(() => {
+    const saved = JSON.parse(localStorage.getItem("the-open-fridge:v1") || "{}");
+    return saved.items?.some((item) => item.text === "Only on this browser") || false;
+  })).toBe(true);
   await page.reload();
   await expect(page.locator("#mode-pill")).toHaveText(/local$/i);
   await expect.poll(() => page.evaluate(() => window.openFridge.items.map((item) => item.text || ""))).toContain("Only on this browser");
