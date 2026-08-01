@@ -33,12 +33,18 @@ async function waitFor(url, description) {
   const deadline = Date.now() + 30_000;
 
   while (Date.now() < deadline) {
+    const controller = new AbortController();
+    // Keep a referenced deadline while Docker is bringing the container up. This
+    // avoids Node 20 treating a pending fetch as an idle test and cancelling it.
+    const requestTimeout = setTimeout(() => controller.abort(), 2_000);
     try {
-      const response = await fetch(url);
+      const response = await fetch(url, { signal: controller.signal });
       if (response.ok) return response;
       lastError = new Error(`${description} returned ${response.status}`);
     } catch (error) {
       lastError = error;
+    } finally {
+      clearTimeout(requestTimeout);
     }
     await new Promise((resolve) => setTimeout(resolve, 250));
   }

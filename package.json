@@ -17,7 +17,7 @@
   "author": "Nacho Labs LLC",
   "packageManager": "npm@11.3.0",
   "engines": {
-    "node": ">=20"
+    "node": ">=26"
   },
   "scripts": {
     "start": "node server/index.js",
@@ -32,6 +32,6 @@
   },
   "license": "MIT",
   "devDependencies": {
-    "@playwright/test": "^1.62.0"
+    "@playwright/test": "^1.62.1"
   }
 }

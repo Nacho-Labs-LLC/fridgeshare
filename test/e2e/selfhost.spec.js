@@ -369,3 +369,60 @@ test("dragging multiple objects and then panning keeps their world grouping inta
     });
   }, itemIds)).toEqual(persistedBeforePan);
 });
+
+test("an editor can use each non-photo creation tool, change the surface, and round-trip an export", async ({ page }) => {
+  const slug = `e2e-tools-${Date.now()}`;
+  await page.goto(baseUrl);
+  await page.getByLabel("Board title").fill("E2E Tools");
+  await page.getByLabel("Board slug").fill(slug);
+  await page.getByRole("button", { name: "Create" }).click();
+  await expect(page).toHaveURL(new RegExp(`/b/${slug}#[A-Za-z0-9_-]{24,96}$`));
+  await expect(page.locator("#mode-pill")).toHaveText(/^Saved/);
+
+  await page.getByRole("button", { name: "Add C magnet" }).click();
+  await page.getByRole("tab", { name: "Emoji" }).click();
+  await expect(page.getByRole("button", { name: "Smileys" })).toBeVisible();
+  await page.getByRole("button", { name: "😀", exact: true }).click();
+  await page.getByRole("tab", { name: "Boards" }).click();
+  await page.getByRole("button", { name: "Add Whiteboard" }).click();
+  await page.getByRole("tab", { name: "Surface" }).click();
+  await page.getByRole("button", { name: "Brushed Stainless" }).click();
+
+  await expect.poll(() => page.evaluate(() => ({
+    theme: window.openFridge.currentSurfaceTheme,
+    types: window.openFridge.items.map((item) => item.type),
+  }))).toEqual(expect.objectContaining({
+    theme: "brushed-stainless",
+    types: expect.arrayContaining(["alphabet", "emoji", "dryEraseBoard"]),
+  }));
+
+  const download = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Export" }).click();
+  const exportFile = await download;
+  assert.equal(exportFile.suggestedFilename(), "open-fridge.fridge");
+  const exported = JSON.parse(await fs.readFile(await exportFile.path(), "utf8"));
+  assert.equal(exported.theme, "brushed-stainless");
+  assert.deepEqual(
+    exported.items.map((item) => item.type).sort(),
+    ["alphabet", "dryEraseBoard", "emoji"],
+  );
+
+  const fileChooser = page.waitForEvent("filechooser");
+  await page.getByRole("button", { name: "Import" }).click();
+  await (await fileChooser).setFiles({
+    name: "imported.fridge",
+    mimeType: "application/json",
+    buffer: Buffer.from(JSON.stringify({
+      theme: "retro-mint",
+      items: [{ id: "imported-note", type: "note", x: 10, y: 20, width: 100, height: 100, text: "Imported" }],
+    })),
+  });
+  await expect(page.locator("#toast")).toHaveText("Fridge imported.");
+  await expect.poll(() => page.evaluate(() => ({
+    theme: window.openFridge.currentSurfaceTheme,
+    items: window.openFridge.items.map((item) => ({ id: item.id, type: item.type, text: item.text })),
+  }))).toEqual({
+    theme: "retro-mint",
+    items: [{ id: "imported-note", type: "note", text: "Imported" }],
+  });
+});
