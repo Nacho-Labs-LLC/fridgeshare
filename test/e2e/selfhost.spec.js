@@ -561,3 +561,38 @@ test("a view-only link exposes no mutation controls and cannot alter the shared 
   assert.deepEqual(afterState.items, initialState.items);
   assert.equal(afterState.theme, initialState.theme);
 });
+
+test("reset preserves a board when cancelled and restores the starter board when confirmed", async ({ page }) => {
+  const slug = `e2e-reset-${Date.now()}`;
+  await page.goto(baseUrl);
+  await page.getByLabel("Board title").fill("E2E Reset");
+  await page.getByLabel("Board slug").fill(slug);
+  await page.getByRole("button", { name: "Create" }).click();
+  await expect(page).toHaveURL(new RegExp(`/b/${slug}#[A-Za-z0-9_-]{24,96}$`));
+  await page.getByRole("button", { name: "Add A magnet" }).click();
+  await expect.poll(() => page.evaluate(() => window.openFridge.items.some((item) => item.type === "alphabet"))).toBe(true);
+  const beforeCancel = await page.evaluate(() => window.openFridge.items.map((item) => item.id));
+
+  page.once("dialog", (dialog) => dialog.dismiss());
+  await page.getByRole("button", { name: "Reset" }).click();
+  await expect.poll(() => page.evaluate(() => window.openFridge.items.map((item) => item.id))).toEqual(beforeCancel);
+
+  page.once("dialog", (dialog) => dialog.accept());
+  await page.getByRole("button", { name: "Reset" }).click();
+  await expect(page.locator("#toast")).toHaveText("Fridge reset.");
+  await expect.poll(() => page.evaluate(() => ({
+    theme: window.openFridge.currentSurfaceTheme,
+    types: window.openFridge.items.map((item) => item.type).sort(),
+  }))).toEqual({
+    theme: "classic-white",
+    types: ["alphabet", "note"],
+  });
+  await expect.poll(async () => page.evaluate(async () => {
+    const response = await fetch(`/api/boards/${location.pathname.split("/").pop()}`);
+    if (!response.ok) return null;
+    const state = await response.json();
+    return { theme: state.theme, types: state.items.map((item) => item.type).sort() };
+  })).toEqual({ theme: "classic-white", types: ["alphabet", "note"] });
+  await page.reload();
+  await expect.poll(() => page.evaluate(() => window.openFridge.items.map((item) => item.type).sort())).toEqual(["alphabet", "note"]);
+});
