@@ -483,3 +483,23 @@ test("an editor can draw on a whiteboard and reload the saved stroke", async ({ 
     return item?.strokes?.[0]?.color || "";
   }, board.id)).toBe("#1a5fa8");
 });
+
+test("the local-only fridge persists browser state without calling the shared-board API", async ({ page }) => {
+  const boardApiRequests = [];
+  page.on("request", (request) => {
+    if (request.url().includes("/api/boards/")) boardApiRequests.push(request.url());
+  });
+  await page.goto(`${baseUrl}/local`);
+  await expect(page.locator("#mode-pill")).toHaveText(/local$/i);
+  await page.getByRole("tab", { name: "Notes" }).click();
+  await page.getByRole("button", { name: "Add Sticky Note" }).click();
+  const noteEditor = page.locator("textarea.note-edit-overlay");
+  await noteEditor.fill("Only on this browser");
+  await noteEditor.press("Escape");
+  await expect.poll(() => page.evaluate(() => window.openFridge.items.some((item) => item.text === "Only on this browser"))).toBe(true);
+  await expect(page.locator("#mode-pill")).toHaveText(/^Saved - local$/);
+  await page.reload();
+  await expect(page.locator("#mode-pill")).toHaveText(/local$/i);
+  await expect.poll(() => page.evaluate(() => window.openFridge.items.map((item) => item.text || ""))).toContain("Only on this browser");
+  assert.deepEqual(boardApiRequests, []);
+});
