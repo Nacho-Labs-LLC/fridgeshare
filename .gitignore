@@ -22,6 +22,10 @@ npm-debug.log*
 node_modules/
 target/
 
+# Browser test artifacts
+playwright-report/
+test-results/
+
 # IDE integrations (not for public repos)
 .agents/
 .claude/
