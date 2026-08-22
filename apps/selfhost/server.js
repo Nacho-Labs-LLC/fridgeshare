@@ -1,5 +1,6 @@
 const http = require("http");
 const crypto = require("crypto");
+const logger = require("pino")();
 const fs = require("fs");
 const fsp = require("fs/promises");
 const path = require("path");
@@ -764,10 +765,10 @@ const server = http.createServer(async (request, response) => {
         sendJson(response, 413, { error: "Request body too large." });
         return;
       }
-      console.error(error);
+      logger.error(error);
       sendJson(response, 500, { error: "Internal server error." });
     } else {
-      console.error(error);
+      logger.error(error);
       response.end();
     }
   }
@@ -797,7 +798,7 @@ if (require.main === module) {
       server.listen(PORT);
     })
     .catch((error) => {
-      console.error("Failed to resolve admin token:", error);
+      logger.error("Failed to resolve admin token:", error);
       process.exit(1);
     });
 }
