@@ -1,4 +1,5 @@
 const { resolveAdminToken, server, validateBoardState } = require("../apps/selfhost/server");
+const logger = require("pino")();
 
 if (require.main === module) {
   const port = Number(process.env.PORT || 4173);
@@ -7,7 +8,7 @@ if (require.main === module) {
       server.listen(port);
     })
     .catch((error) => {
-      console.error("Failed to resolve admin token:", error);
+      logger.error("Failed to resolve admin token:", error);
       process.exit(1);
     });
 }

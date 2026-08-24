@@ -5,7 +5,9 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=4173
 
-COPY package.json ./
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
+
 COPY index.html fridge.html selfhost.html styles.css ./
 COPY apps ./apps
 COPY core ./core
